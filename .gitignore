@@ -1,0 +1,12 @@
+*.code-workspace
+*.pyc
+__pycache__/
+*.egg-info/
+/ipynb/
+/data/
+/docs/
+/.vscode/
+/.venv/
+/.pytest_cache/
+/.pytest_cache/
+/.eggs/
