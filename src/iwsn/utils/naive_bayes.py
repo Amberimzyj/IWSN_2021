@@ -24,7 +24,8 @@ class NavieBayes(object):
 
         self._model = getattr(naive_bayes, bayes_type)()
 
-    def fit(self, train_X: np.ndarray, train_y: np.ndarray):
+    def fit(self, train_X_index: np.ndarray, train_X: np.ndarray, train_y: np.ndarray):
+        self._train_X_index = train_X_index
         self._train_X = train_X
         self._train_y = train_y
         self._preprocess_func()
@@ -47,6 +48,55 @@ class NavieBayes(object):
 
         return condition_prob
 
+    def class_prior_prob(self, y: np.ndarray) -> np.ndarray:
+        check_is_fitted(self)
+        sorter = np.argsort(self._model.classes_)
+        y = sorter[np.searchsorted(self._model.classes_, y, sorter=sorter)]
+        class_prior_prob = np.exp(self._model.class_log_prior_[y])
+
+        return class_prior_prob
+
+    def feature_prior_prob(self, X: np.ndarray) -> np.ndarray:
+        check_is_fitted(self)
+        if self._enc is not None:
+            X = self._enc.transform(X)
+
+        jll = self._model._joint_log_likelihood(X)
+        feature_prior_prob = np.sum(np.exp(jll), axis=1)
+
+        return feature_prior_prob
+
+    def join_prob(self, X: np.ndarray, y: np.ndarray) -> np.ndarray:
+        check_is_fitted(self)
+
+        condition_prob = self.condition_prob(X, y)
+        class_prior_prob = self.class_prior_prob(y)
+        join_prob = condition_prob * class_prior_prob
+
+        return join_prob
+
+    def posterior_prob(self, X: np.ndarray, y: np.ndarray) -> np.ndarray:
+        return self.condition_prob(X, y)
+
+    def mutual_information(self, X: np.ndarray, y: np.ndarray) -> np.ndarray:
+        check_is_fitted(self)
+        join_prob = self.join_prob(X, y)
+        class_prior_prob = self.class_prior_prob(y)
+        feature_prior_prob = self.feature_prior_prob(X)
+        mi = join_prob * \
+            np.log2(join_prob / class_prior_prob / feature_prior_prob)
+
+        return mi
+
+    def chi_square_test(self, X: np.ndarray, y: np.ndarray) -> np.ndarray:
+        check_is_fitted(self)
+        n_samples = len(X)
+
+        npq = n_samples * self.join_prob(X, y)
+        epq = n_samples * self.class_prior_prob(y) * self.feature_prior_prob(X)
+
+        return (npq - epq) ** 2 / epq
+
     def cmpt_condition_prob(self, X: np.ndarray, y: np.ndarray, cmpt_X: bool = True, cmpt_y: bool = True) -> np.ndarray:
         # TODO: 直接通过修改feature_log_prob_的计算过程来实现~Xk,~y概率的计算，达到更高的效率
         check_is_fitted(self)
@@ -64,44 +114,17 @@ class NavieBayes(object):
 
         return cmpt_condition_prob
 
-    def class_prior_prob(self, y: np.ndarray) -> np.ndarray:
-        check_is_fitted(self)
-        sorter = np.argsort(self._model.classes_)
-        y = sorter[np.searchsorted(self._model.classes_, y, sorter=sorter)]
-        class_prior_prob = np.exp(self._model.class_log_prior_[y])
-
-        return class_prior_prob
-
     def cmpt_class_prior_prob(self, y: np.ndarray, cmpt_X: bool = False, cmpt_y: bool = True) -> np.ndarray:
         if not cmpt_y:
             return self.class_prior_prob(y)
         else:
             return 1 - self.class_prior_prob(y)
 
-    def feature_prior_prob(self, X: np.ndarray) -> np.ndarray:
-        check_is_fitted(self)
-        if self._enc is not None:
-            X = self._enc.transform(X)
-
-        jll = self._model._joint_log_likelihood(X)
-        feature_prior_prob = np.sum(np.exp(jll), axis=1)
-
-        return feature_prior_prob
-
     def cmpt_feature_prior_prob(self, X: np.ndarray, cmpt_X: bool = True, cmpt_y: bool = False) -> np.ndarray:
         if not cmpt_X:
             return self.feature_prior_prob(X)
         else:
             return 1 - self.feature_prior_prob(X)
-
-    def join_prob(self, X: np.ndarray, y: np.ndarray) -> np.ndarray:
-        check_is_fitted(self)
-
-        condition_prob = self.condition_prob(X, y)
-        class_prior_prob = self.class_prior_prob(y)
-        join_prob = condition_prob * class_prior_prob
-
-        return join_prob
 
     def cmpt_join_prob(self, X: np.ndarray, y: np.ndarray, cmpt_X: bool = False, cmpt_y: bool = True) -> np.ndarray:
         check_is_fitted(self)
@@ -139,12 +162,7 @@ class NavieBayes(object):
 
         return cmpt_join_prob
 
-    def posterior_prob(self, X: np.ndarray, y: np.ndarray) -> np.ndarray:
-        check_is_fitted(self)
-
-        return self.condition_prob(X, y)
-
-    def mutual_information(self, X: np.ndarray, y: np.ndarray) -> np.ndarray:
+    def cmpt_mutual_information(self, X: np.ndarray, y: np.ndarray) -> np.ndarray:
         def cal_mi(a):
             join_prob = self.cmpt_join_prob(X, y, *a)
             class_prior_prob = self.cmpt_class_prior_prob(y, *a)
@@ -162,7 +180,7 @@ class NavieBayes(object):
 
         return mi
 
-    def chi_square_test(self, X: np.ndarray, y: np.ndarray) -> np.ndarray:
+    def cmpt_chi_square_test(self, X: np.ndarray, y: np.ndarray) -> np.ndarray:
         check_is_fitted(self)
         n_samples = len(X)
 
@@ -181,21 +199,43 @@ class NavieBayes(object):
 
         return csq
 
-    def max_metric(self, X: np.ndarray, y: np.ndarray) -> np.ndarray:
-        n_samples = len(X)
+    def select(self, X: np.ndarray, y: np.ndarray, metric: str) -> np.ndarray:
+        if not metric in ['posterior_prob', 'mutual_information', 'chi_square_test']:
+            raise ValueError('The spectified metric not supported.')
 
-        metrics = np.empty((3, n_samples), dtype='float')
+        metrics = np.expand_dims(self._scale_data(
+            getattr(self, metric)(X, y)), 0)
+        indexs = np.expand_dims(self._train_X_index, 0)
+        # metrics[metrics <= thresh] = 0.
+        indexed_metrics = np.concatenate([indexs, metrics]).T
+        indexed_metrics = -np.sort(-indexed_metrics, axis=0)
 
-        metrics[0] = self.posterior_prob(X, y)
-        metrics[1] = self.mutual_information(X, y)
-        metrics[2] = self.chi_square_test(X, y)
+        unique_index = np.unique(indexed_metrics[:, 0], return_index=True)[1]
+        unique_index.sort()
+        indexed_metrics = indexed_metrics[unique_index]
 
-        return np.max(metrics, axis=0)
+        return indexed_metrics
+
+    def _scale_data(self, data: np.ndarray):
+        return (data - data.min()) / (data.max() - data.min())
 
 
 if __name__ == '__main__':
-    train_X = np.random.randint(1, 6, (4000, 2))
-    train_y = np.random.randint(1, 4, 4000)
+    # train_X = np.random.randint(1, 6, (10, 2))
+    # train_y = np.random.randint(1, 4, 10)
+
+    train_X = np.array([
+        [3, 1],
+        [4, 4],
+        [3, 5],
+        [4, 1],
+        [2, 2],
+        [4, 5],
+        [1, 3],
+        [4, 5],
+        [5, 1],
+        [5, 3]], dtype='int')
+    train_y = np.array([1, 1, 1, 3, 1, 3, 3, 2, 1, 3], dtype='int')
 
     test_X = train_X[0:2]
     test_y = train_y[0:2]
@@ -216,6 +256,8 @@ if __name__ == '__main__':
     csq = nb.chi_square_test(test_X, test_y)
     max_metric = nb.max_metric(test_X, test_y)
 
+    print('Train X: ', train_X)
+    print('Train y: ', train_y)
     print('Test X: ', test_X)
     print('Test y: ', test_y)
     print('condition_prob: ', condition_prob)

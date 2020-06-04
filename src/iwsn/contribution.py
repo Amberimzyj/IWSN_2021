@@ -16,6 +16,8 @@ from indexedproperty import indexedproperty
 import numpy as np
 import pandas as pd
 from sklearn.naive_bayes import MultinomialNB
+from matplotlib import pyplot as plt
+from tqdm.auto import tqdm
 
 from iwsn.utils.patterns import singleton
 from iwsn.utils.naive_bayes import NavieBayes
@@ -28,12 +30,11 @@ class SensorContrib(object):
     def __init__(self,
                  data_path: str = 'data/sensors.csv',
                  active_thresh: float = 0.7,
-                 sensor_num_pre_t: int = 40,
+                 sensor_num_pre_t: int = 100,
                  trans_time_interal: int = 3,
                  feature_sensor_time: float = 0.5,
                  feature_sensor_dis: float = 5.,
-                 bayes_type: str = 'MultinomialNB',
-                 static_thresh: float = 0.2):
+                 bayes_type: str = 'MultinomialNB'):
         """The sensor conttibution class.
 
         Keyword Arguments:
@@ -56,21 +57,59 @@ class SensorContrib(object):
         self._path = data_path
         self._length = len(self._data)
         self._naive_bayes = NavieBayes(bayes_type)
-        self._static_thresh = static_thresh
-        # self.t_activate(0)     # calculate the activate sensors at timeslot 0
-        # self.save_data()
 
-    def static_stage(self):
-        for t in range(0, self._n_timeslots - 1):
-            activated = self.t_activate(t)
-            selected, sel_length = self.select_sensor(activated, t+1)
+    def static_stage(self, max_sensors: int = 100):
+        activated = self.t_activate(0)
+
+        ave_pp_accs = np.zeros((self._n_timeslots-2, max_sensors), 'float')
+        ave_mi_accs = np.zeros((self._n_timeslots-2, max_sensors), 'float')
+        ave_chi_accs = np.zeros((self._n_timeslots-2, max_sensors), 'float')
+
+        for t in tqdm(range(1, self._n_timeslots - 1)):
+            selected, sel_length = self.select_sensor(activated, t)
             data_X_index, data_X, data_y = self.nb_make_dataset(
                 selected, sel_length)
-            self._naive_bayes.fit(data_X, data_y)
-            max_metric = self._naive_bayes.max_metric(data_X, data_y)
-            predict_sensors_index = data_X_index[max_metric >
-                                                 self._static_thresh]
-            break
+
+            if len(data_X) == 0:
+                activated = np.array(self.t_activate(t))
+                continue
+
+            self._naive_bayes.fit(data_X_index, data_X, data_y)
+            ave_pp_accs[t-1] = self._nb_cal_succ_predict_radio(
+                t, max_sensors, data_X, data_y, 'posterior_prob')
+            ave_mi_accs[t-1] = self._nb_cal_succ_predict_radio(
+                t, max_sensors, data_X, data_y, 'mutual_information')
+            ave_chi_accs[t-1] = self._nb_cal_succ_predict_radio(
+                t, max_sensors, data_X, data_y, 'chi_square_test')
+
+        ave_pp_accs = ave_pp_accs.mean(axis=0)
+        ave_mi_accs = ave_mi_accs.mean(axis=0)
+        ave_chi_accs = ave_chi_accs.mean(axis=0)
+
+        plt.plot(ave_pp_accs, color='green')
+        plt.plot(ave_mi_accs, color='blue')
+        plt.plot(ave_chi_accs, color='red')
+        plt.show()
+
+    def _nb_cal_succ_predict_radio(self, t: int, max_sensors: int, X: np.ndarray, y: np.ndarray, metric: str):
+        indexed_metrics = self._naive_bayes.select(X, y, metric)
+        activated = np.array(self.t_activate(t))
+        accs = self._cal_succ_predict_radio(indexed_metrics[:, 0], activated)
+        filled_accs = np.full(max_sensors, accs[-1], 'float')
+        filled_accs[:len(accs)] = accs[:max_sensors]
+
+        return filled_accs
+
+    def _cal_succ_predict_radio(self, predict, actual):
+        predict = predict.astype('int')
+
+        accs = np.empty(len(predict), 'float')
+        for i in range(1, len(predict)+1):
+            inter = np.intersect1d(predict[:i], actual)
+            acc = len(inter) / len(actual)
+            accs[i-1] = acc
+
+        return accs
 
     def t_activate(self, t: int) -> List[int]:
         """Calculate the activate sensors at timeslot t.

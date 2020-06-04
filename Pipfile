@@ -13,6 +13,8 @@ pandas = "*"
 numpy = "*"
 indexedproperty = "*"
 scikit-learn = "*"
+matplotlib = "*"
+tqdm = "*"
 
 [requires]
 python_version = "3.8"
