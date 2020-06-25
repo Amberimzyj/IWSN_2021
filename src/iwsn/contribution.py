@@ -91,7 +91,7 @@ class SensorContrib(object):
         plt.plot(ave_chi_accs, color='red')
         plt.show()
 
-    def _nb_cal_succ_predict_radio(self, t: int, max_sensors: int, X: np.ndarray, y: np.ndarray, metric: str):
+    def _nb_cal_succ_predict_radio(self, t: int, max_sensors: int, X: np.ndarray, y: np.ndarray, metric: str) -> np.ndarray:
         indexed_metrics = self._naive_bayes.select(X, y, metric)
         activated = np.array(self.t_activate(t))
         accs = self._cal_succ_predict_radio(indexed_metrics[:, 0], activated)
