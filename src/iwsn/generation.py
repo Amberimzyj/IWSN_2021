@@ -25,7 +25,7 @@ class SensorGen(object):
             ranges=[1, 6],
             sensor_list=[1, 2, 3, 4, 5],
             save_path="data/sensors.csv",
-            sensors_everyslot = 10,#每个timeslot的sensor数量=钢板速度
+            sensors_everyslot = 50,#每个timeslot的sensor数量=钢板速度
             act_ratio = 0.8): #每个timeslot激活传感器数量的比例
         self._length = n
         self._sensornum = sensors_everyslot #每个timeslot的sensor数量
@@ -82,12 +82,14 @@ class SensorGen(object):
     def _gen_trans_time(self):
         return np.zeros(self._length, 'float')
 
-    def _gen_loaction(self, time_slot: List[int]) -> List[tuple]:
+    def _gen_loaction(self, time_slot: List[int]) -> List[int]:
         locations = []
         for pcs in time_slot:
-            x = random.randint( 10*(pcs - 1), 10*pcs)
-            y = random.randint(0, 10)
-            locations.append((x, y))
+            x = random.randint( 10*(pcs-1), 10*pcs)
+            #x = random.randint( 10*(pcs - 1), 10*pcs)
+            #y = random.randint(0, 10)
+            #locations.append((x, y))
+            locations.append(x)
 
         return locations
 
