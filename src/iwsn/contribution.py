@@ -10,7 +10,7 @@ import os
 import random
 import math
 from ast import literal_eval
-from typing import List, Union
+from typing import List, Tuple, Union
 
 from indexedproperty import indexedproperty
 import numpy as np
@@ -29,11 +29,10 @@ class SensorContrib(object):
 
     def __init__(self,
                  data_path: str = 'data/sensors.csv',
-                 active_thresh: float = 0.7,
-                 sensor_num_pre_t: int = 100,
+                 active_thresh: float = 0.2,
+                 sensor_num_pre_t: int = 10,
                  trans_time_interal: int = 3,
-                 feature_sensor_time: float = 0.5,
-                 feature_sensor_dis: float = 5.,
+                 feature_sensor_dis: float = 3.,
                  bayes_type: str = 'MultinomialNB'):
         """The sensor conttibution class.
 
@@ -51,45 +50,60 @@ class SensorContrib(object):
         self._sensor_npt = sensor_num_pre_t
         self._n_timeslots = int(len(self._data) / self._sensor_npt)
         self._tti = trans_time_interal
-        self._feat_sensor_time = feature_sensor_time
         self._feat_sensor_dis = feature_sensor_dis
 
         self._path = data_path
         self._length = len(self._data)
         self._naive_bayes = NavieBayes(bayes_type)
 
-    def static_stage(self, max_sensors: int = 100):
-        activated = self.t_activate(0)
+    def static_stage(self, max_sensors: int = 10):
+        if self._n_timeslots <= 2:
+            raise ValueError("数据的timeslots必须大于2")
 
-        ave_pp_accs = np.zeros((self._n_timeslots-2, max_sensors), 'float')
-        ave_mi_accs = np.zeros((self._n_timeslots-2, max_sensors), 'float')
-        ave_chi_accs = np.zeros((self._n_timeslots-2, max_sensors), 'float')
+        # 获得前两个time slot激活的节点
+        activated_t0 = self.t_activate(0)
+        activated_t1 = self.t_activate(1)
 
-        for t in tqdm(range(1, self._n_timeslots - 1)):
-            selected, sel_length = self.select_sensor(activated, t)
-            data_X_index, data_X, data_y = self.nb_make_dataset(
-                selected, sel_length)
+        # ave_pp_accs = np.zeros((self._n_timeslots-2, max_sensors), 'float')
+        # ave_mi_accs = np.zeros((self._n_timeslots-2, max_sensors), 'float')
+        # ave_chi_accs = np.zeros((self._n_timeslots-2, max_sensors), 'float')
 
-            if len(data_X) == 0:
-                activated = np.array(self.t_activate(t))
-                continue
+        # 依次遍历后续的time slot
+        for t in range(2, self._n_timeslots - 1):
+            # self._naive_bayes = NavieBayes("MultinomialNB")
+            train_X_index, train_X, train_y = self.nb_gen_train_data(
+                activated_t0, activated_t1)
+            self._naive_bayes.fit(train_X_index, train_X,
+                                  train_y, partial=True)
 
-            self._naive_bayes.fit(data_X_index, data_X, data_y)
-            ave_pp_accs[t-1] = self._nb_cal_succ_predict_radio(
-                t, max_sensors, data_X, data_y, 'posterior_prob')
-            ave_mi_accs[t-1] = self._nb_cal_succ_predict_radio(
-                t, max_sensors, data_X, data_y, 'mutual_information')
-            ave_chi_accs[t-1] = self._nb_cal_succ_predict_radio(
-                t, max_sensors, data_X, data_y, 'chi_square_test')
+            eval_X_index, eval_X, eval_y, eval_length = self.select_sensor(
+                activated_t1, t)
+            predict_proba = self._naive_bayes.predict_proba(eval_X)[:, 0]
+            predict_sensors = np.take(
+                eval_X_index, np.argsort(predict_proba)[:max_sensors])
 
-        ave_pp_accs = ave_pp_accs.mean(axis=0)
-        ave_mi_accs = ave_mi_accs.mean(axis=0)
-        ave_chi_accs = ave_chi_accs.mean(axis=0)
+            activated_t0 = activated_t1
+            activated_t1 = self.t_activate(t)
 
-        plt.plot(ave_pp_accs, color='green')
-        plt.plot(ave_mi_accs, color='blue')
-        plt.plot(ave_chi_accs, color='red')
-        plt.show()
+            acc = len(np.intersect1d(activated_t1, predict_sensors)
+                      ) / len(activated_t1)
+            print(f'slot: {t}, acc: {acc}')
+
+            # ave_pp_accs[t-1] = self._nb_cal_succ_predict_radio(
+            #     t, max_sensors, data_X, data_y, 'posterior_prob')
+            # ave_mi_accs[t-1] = self._nb_cal_succ_predict_radio(
+            #     t, max_sensors, data_X, data_y, 'mutual_information')
+            # ave_chi_accs[t-1] = self._nb_cal_succ_predict_radio(
+            #     t, max_sensors, data_X, data_y, 'chi_square_test')
+
+        # ave_pp_accs = ave_pp_accs.mean(axis=0)
+        # ave_mi_accs = ave_mi_accs.mean(axis=0)
+        # ave_chi_accs = ave_chi_accs.mean(axis=0)
+
+        # plt.plot(ave_pp_accs, color='green')
+        # plt.plot(ave_mi_accs, color='blue')
+        # plt.plot(ave_chi_accs, color='red')
+        # plt.show()
 
     def _nb_cal_succ_predict_radio(self, t: int, max_sensors: int, X: np.ndarray, y: np.ndarray, metric: str) -> np.ndarray:
         indexed_metrics = self._naive_bayes.select(X, y, metric)
@@ -121,67 +135,79 @@ class SensorContrib(object):
             List[int] -- Return the activated sensors' index.
         """
         activated = []
-        for i in range(self._sensor_npt * t, self._sensor_npt * (t + 1)):   # 10 minislots
+        for i in range(self._sensor_npt * t, self._sensor_npt * (t + 1)):
             if self.trans_prob[i] >= self._active_th:
-                self.trans_time[i] = random.uniform(
-                    self._tti * t, self._tti * (t + 1))
                 activated.append(i)
 
         return activated
 
-    def select_sensor(self, activated: list, t: int):
-        """Select the feature sensors base on the acticated sensors list.
+    def require_distance(self, distance: int) -> bool:
+        """判断两个节点间的距离是否小于阈值
 
-        Arguments:
-            activated {list} -- The activated sensots list.
-            t {int} -- The calculate time slot.
+        Args:
+            distance (int): 输入的节点间距离
 
         Returns:
-            (dict, int) -- The selected sensors dict and sensors' length
+            bool: 返回判断结果
         """
+        return distance < self._feat_sensor_dis and distance > 0
 
-        def require_activated():
-            return (self.trans_time[x] != 0
-                    and self.sensor_type[x] == self.sensor_type[y]
-                    and abs(self.trans_time[x] - self.trans_time[y]) < self._feat_sensor_time)
+    def select_sensor(self, activated: list, t: int) -> Tuple[list, list, list, int]:
+        """根据上一时隙激活的节点选择后续的节点
 
-        def require_distance():
-            return self._euclidean_dis(self.location[x], self.location[y]) < self._feat_sensor_dis
+        Args:
+            activated (list): 输入的上一时隙激活节点列表
+            t (int): 当前时隙time slot
 
-        selected = {}
+        Returns:
+            Tuple[list, list, list, int]: 返回选择后的节点数据
+        """
         length = 0
 
+        data_X_index = []
+        data_X = []
+        data_y = []
+
         for y in activated:
-            selected[y] = []
-            for x in range(self._sensor_npt * t, self._sensor_npt * (t + 1)):
-                if require_activated() or require_distance():
+            for x in range(self._sensor_npt * t, self._length):
+                distance = self._cal_dis(self.location[x], self.location[y])
+                if self.require_distance(distance):
                     length += 1
-                    selected[y].append(x)
+                    data_X_index.append(x)
+                    data_X.append([distance])
+                    data_y.append(y)
 
-        return selected, length
+        return data_X_index, data_X, data_y, length
 
-    def nb_make_dataset(self, selected: dict, length: int):
-        """Convert dataset to sklearn style data.
+    def nb_gen_train_data(self, activated_t1: list, activated_t2: list) -> Tuple[list, list, list]:
+        """生成朴素贝叶斯训练数据
 
-        Arguments:
-            selected {dict} -- The selected sensors dict.
-            length {int} -- The number of selected sensors.
+        Args:
+            activated_t1 (list): 前一个时刻触发的节点集
+            activated_t2 (list): 当前时刻触发的节点集
 
         Returns:
-            (np.ndarray, np.ndarray) -- The converted data X and y.
+            Tuple[list, list, list]: 训练的数据
         """
-        data_X_index = np.empty(length, 'int')
-        data_X = np.empty((length, 2), 'int')
-        data_y = np.empty(length, 'int')
+        data_X_index = []
+        data_X = []
+        data_y = []
 
-        count = 0
-        for y, feat_sensors in selected.items():
-            for x in feat_sensors:
-                data_X_index[count] = x
-                data_X[count] = self.sensor_type[x], round(
-                    self._euclidean_dis(self.location[x], self.location[y]))
-                data_y[count] = y
-                count += 1
+        start_y = max(activated_t2)
+        for y in activated_t1:
+            for x in activated_t2:
+                distance = self._cal_dis(self.location[x], self.location[y])
+                data_X_index.append(x)
+                data_X.append([distance])
+                data_y.append(1)
+
+            # for x in random.sample(range(start_y+1, self._length), len(activated_t2)):
+            for x in range(start_y+1, self._length):
+                distance = self._cal_dis(self.location[x], self.location[y])
+                if self.require_distance(distance):
+                    data_X_index.append(x)
+                    data_X.append([distance])
+                    data_y.append(0)
 
         return data_X_index, data_X, data_y
 
@@ -189,39 +215,42 @@ class SensorContrib(object):
         '''Save dataframe to csv.'''
         self._data.to_csv(self._path)
 
-    def _euclidean_dis(self, x: Union[tuple, list], y: Union[tuple, list]):
+    def _cal_dis(self, x: int, y: int) -> float:
+        """计算两个节点间的距离
+
+        Args:
+            x (int): 节点x的位置
+            y (int): 节点y的位置
+
+        Raises:
+            TypeError: 输入的位置类型错误
+            ValueError: 输入的位置值错误
+
+        Returns:
+            float: 返回计算后的距离
+        """
         for a in (x, y):
-            if not isinstance(a, (tuple, list)):
-                raise TypeError("The points' type must be tuple or list.")
-            if len(a) == 0:
-                raise ValueError("The points' must have at least one value.")
+            if a < 0:
+                raise ValueError("输入的位置必须大于等于0")
 
-        return math.sqrt(sum([(a - b) ** 2 for a, b in zip(x, y)]))
+        return int((x - y) / 10)
 
     @indexedproperty
-    def sensor_type(self, key: int) -> int:
-        return self._data.at[key, 'sensor type']
+    def trans_slot(self, key: float) -> float:
+        return self._data.at[key, 'transmission slot']
 
-    @sensor_type.setter
-    def sensor_type(self, key: int, value: int):
-        self._data.at[key, 'sensor type'] = value
-
-    @indexedproperty
-    def trans_time(self, key: float) -> float:
-        return self._data.at[key, 'transmission time']
-
-    @trans_time.setter
-    def trans_time(self, key: int, value: float):
-        self._data.at[key, 'transmission time'] = value
+    @trans_slot.setter
+    def trans_slot(self, key: int, value: float):
+        self._data.at[key, 'transmission slot'] = value
 
     @indexedproperty
-    def location(self, key: int) -> tuple:
-        return literal_eval(self._data.at[key, 'location'])
+    def location(self, key: int) -> int:
+        return self._data.at[key, 'location']
 
     @location.setter
-    def location(self, key: int, value: tuple):
-        if type(value) != tuple:
-            raise TypeError('The input value type must be tuple.')
+    def location(self, key: int, value: int):
+        if type(value) != int:
+            raise TypeError('The input value type must be int.')
 
         self._data.at[key, 'location'] = str(value)
 

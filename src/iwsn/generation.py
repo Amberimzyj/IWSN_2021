@@ -25,11 +25,11 @@ class SensorGen(object):
             ranges=[1, 6],
             sensor_list=[1, 2, 3, 4, 5],
             save_path="data/sensors.csv",
-            sensors_everyslot = 50,#每个timeslot的sensor数量=钢板速度
-            act_ratio = 0.8): #每个timeslot激活传感器数量的比例
+            sensors_everyslot=10,  # 每个timeslot的sensor数量=钢板速度
+            act_ratio=0.8):  # 每个timeslot激活传感器数量的比例
         self._length = n
-        self._sensornum = sensors_everyslot #每个timeslot的sensor数量
-        self._act_num = int(self._sensornum * act_ratio) #每个timeslot激活的传感器数量
+        self._sensornum = sensors_everyslot  # 每个timeslot的sensor数量
+        self._act_num = int(self._sensornum * act_ratio)  # 每个timeslot激活的传感器数量
 
         process = self._gen_process(ranges)
         time_slot = self._gen_time_slot()
@@ -37,17 +37,16 @@ class SensorGen(object):
         trans_time = self._gen_trans_time()
         location = self._gen_loaction(time_slot)
         trans_probs = self._gen_trans_prob()
-        select_sensor = self._gen_select_sensor()
-        
+        # select_sensor = self._gen_select_sensor()
 
-
-        dataframe = pd.DataFrame({#"technological process": process,
-                                  "time slot":time_slot,
-                                  #"sensor type": sensor_type,
-                                  #"transmission time": trans_time,
-                                  "location": location,
-                                  "transmission probability": trans_probs,
-                                  "selected sensor":select_sensor})
+        dataframe = pd.DataFrame({  # "technological process": process,
+            "time slot": time_slot,
+            # "sensor type": sensor_type,
+            # "transmission time": trans_time,
+            "location": location,
+            "transmission probability": trans_probs,
+            # "selected sensor": select_sensor
+        })
         dataframe.to_csv(save_path)
 
     def _gen_process(self, ranges: Union[tuple, list]) -> List[int]:
@@ -74,9 +73,10 @@ class SensorGen(object):
 
         return sensor_type
 
-    def _gen_time_slot(self) ->list:
-        serial = math.ceil(self._length/self._sensornum) #得到timeslot个数
-        timeslot = [a for a in range(1,serial+1) for i in range(self._sensornum)]
+    def _gen_time_slot(self) -> list:
+        serial = math.ceil(self._length/self._sensornum)  # 得到timeslot个数
+        timeslot = [a for a in range(1, serial+1)
+                    for i in range(self._sensornum)]
         return timeslot
 
     def _gen_trans_time(self):
@@ -85,7 +85,7 @@ class SensorGen(object):
     def _gen_loaction(self, time_slot: List[int]) -> List[int]:
         locations = []
         for pcs in time_slot:
-            x = random.randint( 10*(pcs-1), 10*pcs)
+            x = random.randint(10*(pcs-1), 10*pcs)
             #x = random.randint( 10*(pcs - 1), 10*pcs)
             #y = random.randint(0, 10)
             #locations.append((x, y))
@@ -97,15 +97,14 @@ class SensorGen(object):
         trans_probs = [random.uniform(0, 1) for i in range(self._length)]
 
         return trans_probs
-    
+
     def _gen_select_sensor(self) -> list:
         select_sensor = [0]*self._length
-        serial = math.ceil(self._length/self._sensornum) #得到timeslot个数
+        serial = math.ceil(self._length/self._sensornum)  # 得到timeslot个数
         for i in range(serial):
-            for j in range(10*i,10*i+self._act_num):
+            for j in range(10*i, 10*i+self._act_num):
                 select_sensor[j] = 1
         return select_sensor
-
 
 
 if __name__ == '__main__':
