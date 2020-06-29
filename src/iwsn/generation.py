@@ -1,10 +1,15 @@
-# -*- coding: utf-8 -*-
-# @Author: Yajing Zhang
-# @Emial:  amberimzyj@qq.com
-# @Date:   2020-04-21 15:27:10
-# @Last Modified by:   Yajing Zhang
-# @Last Modified time: 2020-04-25 13:16:23
-# @License: MIT LICENSE
+# Project: iwsn
+# File Created: Friday, 26th June 2020 7:21:59 pm
+# Author: Yajing Zhang (amberimzyj@qq.com)
+# -----
+# Last Modified: Friday, 26th June 2020 7:34:49 pm
+# Modified By: Yajing Zhang (amberimzyj@qq.com>)
+# -----
+# Copyright 2017 - 2020 Your Company, Your Company
+
+
+
+
 
 import math
 import random
@@ -21,12 +26,13 @@ class SensorGen(object):
     ''' The sensor generation class.'''
 
     def gen(self,
-            n=5000,
+            n=100,
             ranges=[1, 6],
             sensor_list=[1, 2, 3, 4, 5],
             save_path="data/sensors.csv",
             sensors_everyslot=10,  # 每个timeslot的sensor数量=钢板速度
-            act_ratio=0.8):  # 每个timeslot激活传感器数量的比例
+            act_ratio=0.8
+            ):  # 每个timeslot激活传感器数量的比例
         self._length = n
         self._sensornum = sensors_everyslot  # 每个timeslot的sensor数量
         self._act_num = int(self._sensornum * act_ratio)  # 每个timeslot激活的传感器数量
@@ -75,7 +81,7 @@ class SensorGen(object):
 
     def _gen_time_slot(self) -> list:
         serial = math.ceil(self._length/self._sensornum)  # 得到timeslot个数
-        timeslot = [a for a in range(1, serial+1)
+        timeslot = [a for a in range(serial)
                     for i in range(self._sensornum)]
         return timeslot
 
@@ -85,7 +91,7 @@ class SensorGen(object):
     def _gen_loaction(self, time_slot: List[int]) -> List[int]:
         locations = []
         for pcs in time_slot:
-            x = random.randint(10*(pcs-1), 10*pcs)
+            x = random.randint(10*pcs, 10*(pcs+1))
             #x = random.randint( 10*(pcs - 1), 10*pcs)
             #y = random.randint(0, 10)
             #locations.append((x, y))

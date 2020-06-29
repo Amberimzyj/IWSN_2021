@@ -3,6 +3,7 @@
 __pycache__/
 *.egg-info/
 /ipynb/
+/src/jupyter/
 /data/
 /docs/
 /.vscode/
