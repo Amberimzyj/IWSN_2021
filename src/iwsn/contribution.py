@@ -35,6 +35,7 @@ class SensorContrib(object):
                  sensor_num_pre_t: int = 10,
                  trans_time_interal: int = 3,
                  feature_sensor_dis: float = 3.,
+                 act_num = 6,
                  bayes_type: str = 'MultinomialNB'):
         """The sensor conttibution class.
 
@@ -56,6 +57,7 @@ class SensorContrib(object):
 
         self._path = data_path
         self._length = len(self._data)
+        self._act_num = act_num
         self._naive_bayes = NavieBayes(bayes_type)
 
     # def static_stage(self, max_sensors: int = 10):
@@ -128,7 +130,7 @@ class SensorContrib(object):
     #     return accs
 
     
-    def cal_pre_accu(self, t:int, probability: np.ndarray, act_num:int) -> float:
+    def cal_pre_accu(self, t:int, probability: np.ndarray) -> float:
         """计算预测精度
 
         Args:
@@ -141,28 +143,51 @@ class SensorContrib(object):
 
         # cond_pro = np.random.rand(self._length,self._length)
         # act_times, joint_times, pri_pro, cond_pro = sensor_contirb.circul(cir_num)
-        activated_t1 = self.t_activate(t,act_num) #前一时刻触发的节点list
+        activated_t1 = self.t_activate(t) #前一时刻触发的节点list
         # sel_sensor = np.zeros((self._length,self._length))
         # sort_sensor = np.zeros((self._length,self._length))
         # for i in range(self._sensor_npt):
         #     sel_sensor[i] = cond_pro[activated_t1[i]]
         sel_sensor = probability[activated_t1]
-        sort_sensor = np.flip(np.argsort(sel_sensor),axis=1) #从大到小排序条件概率p(x|i)对应的x
-        sort_sensor[:,0:act_num] #每一行（y）取概率最大的前十个x
-        unique, counts = np.unique(sort_sensor, return_counts=True)
-        sort_sensor = unique[np.argsort(counts)[::-1]] #从大到小排序index
-        sort_sensor = sort_sensor[:act_num] #显示act_num个index
-        activated_t2 = self.t_activate(t+1,act_num) #后一时刻触发的节点list
-        pre_accu = len(set(sort_sensor) & set(activated_t2))/self._sensor_npt
+        sel_sensor = np.cumsum(sel_sensor,axis=0)
+        if len(sel_sensor) > 0:
+            sel_sensor = sel_sensor[-1]
+        elif len(sel_sensor) == 0:
+            pass
+        # sel_sensor = sel_sensor.ravel()[np.flatnonzero(sel_sensor)]
+        for i in range(len(sel_sensor)):
+            if sel_sensor[i] != 0:
+                sel_sensor[i] += 2
+            else:
+                pass
+        sort_sensor = np.argsort(sel_sensor)[::-1] #从大到小排序条件概率p(x|i)对应的x
+        # sort_sensor = np.flip(np.argsort(sel_sensor),axis=0)#从大到小排序条件概率p(x|i)对应的x
+        sort_sensor = sort_sensor[0:4] #每一行（y）取概率最大的前十个x
+        # unique, counts = np.unique(sort_sensor, return_counts=True)
+        # sort_sensor = unique[np.argsort(counts)[::-1]] #从大到小排序index
+        # sort_sensor = np.argsort(sort_sensor)[::-1] #从大到小排序index
+        # sort_sensor = sort_sensor[:self._act_num] #显示act_num个index
+        activated_t2 = self.t_activate(t+1) #后一时刻触发的节点list
+        pre_accu = len(np.intersect1d(sort_sensor,activated_t2))/self._act_num
 
-        # return pre_accu
-        return set(sort_sensor),activated_t1, activated_t2
+        return pre_accu
+        # return pre_accu, sel_sensor,sort_sensor,activated_t1, activated_t2
+
+
+    def cal_ave_pre_accu(self, t1:int, t2:int, probability: np.ndarray ) -> float:
+
+        pre_accu = 0
+        for i in range(t1,t2):
+            pre_accu += self.cal_pre_accu(i,probability)
+        ave_pre_accu = pre_accu/(t2-t1)
+
+        return ave_pre_accu
+
+
+
         
-                        
 
-        
-
-    def t_activate(self, t: int, act_num: int) -> List[int]:
+    def t_activate(self, t: int) -> List[int]:
 
         """Calculate the activate sensors at timeslot t.
 
@@ -176,8 +201,8 @@ class SensorContrib(object):
 
         activated = []
         # active_th = np.linspace(0.5,1,sensor_num,endpoint=False) #设置传感器触发概率随着sensor index递减
-        for i in range(self._sensor_npt * t, (self._sensor_npt * t + act_num)):
-            if self.trans_prob[i] >= 0.3:
+        for i in range(self._sensor_npt * t, (self._sensor_npt * t + self._act_num)):
+            if self.trans_prob[i] >= 0.2:
                 activated.append(i)
 
         return activated
@@ -234,7 +259,7 @@ class SensorContrib(object):
     #     """
     #     return np.ndarray[y][x] = yx_num/cir_num
 
-    def circul(self, cir_num:int ,act_num:int) -> np.ndarray:
+    def circul(self, cir_num:int) -> np.ndarray:
         """模拟传感器循环触发
 
         Args:
@@ -251,9 +276,9 @@ class SensorContrib(object):
         #记录各种触发次数
         for i in tqdm(range(cir_num)):
             for t in tqdm(range(self._n_timeslots), leave=False):
-                activated_t1 = self.t_activate(t,act_num) #t时刻触发的节点
+                activated_t1 = self.t_activate(t) #t时刻触发的节点
                 if t < (self._n_timeslots - 1):
-                    activated_t2 = self.t_activate(t+1,act_num) #t+1时刻触发的节点
+                    activated_t2 = self.t_activate(t+1) #t+1时刻触发的节点
                     joint_times[np.ix_(activated_t1,activated_t2)] += 1
                 act_times[activated_t1] += 1
             self._data["transmission probability"] = [random.uniform(0, 1) for i in range(self._length)]  #每循环一次重新生成触发概率
@@ -310,12 +335,15 @@ class SensorContrib(object):
         Returns:
             float: 互信息概率
         """
+        MI_pro = np.zeros((self._length,self._length),'float')
         pri_pro, cond_pro, pri_pro_re, joint_pro = self.cal_cond_pro(act_times, joint_times, cir_num)
-        pxpy = np.dot(pri_pro[:1].T,pri_pro[:1]) #计算p(x)*p(y)
+        pxpy = np.expand_dims(pri_pro,axis = 1) * np.expand_dims(pri_pro,axis = 0) #计算p(x)*p(y)
         pxpy = np.where(pxpy>0,1/pxpy,0)
-        MI_pro = cond_pro * np.log2(cond_pro * pxpy) #计算互信息
+        MI_pro = joint_pro * np.log2(np.where((joint_pro * pxpy) > 0, joint_pro * pxpy, 0)) #计算互信息
+        MI_pro[np.isnan(MI_pro)] = 0 #将nan替换为0
         
         return MI_pro
+        # return pxpy
 
     def cal_X2(self, act_times:np.ndarray, joint_times:np.ndarray, cir_num: int) -> float:
         """计算卡方概率
@@ -329,9 +357,21 @@ class SensorContrib(object):
         """
 
         pri_pro, cond_pro, pri_pro_re, joint_pro = self.cal_cond_pro(act_times, joint_times, cir_num)
-        X2_pro = -np.sqrt(joint_pro-np.dot(pri_pro[:1].T,pri_pro[:1]))/np.dot(pri_pro[:1].T,pri_pro[:1])
+
+        #计算p(x)*p(y)
+        pxpy_re = np.expand_dims(pri_pro,axis = 1) * np.expand_dims(pri_pro,axis = 0) #计算临时p(x)*p(y)
+        pxpy_re = np.where(pxpy_re>0,1/pxpy_re,0)
+        index = np.array(np.nonzero(cond_pro)).T #取出条件概率不为0的index
+        pxpy = np.zeros((self._length,self._length),'float') #存放整形后的p(x)*p(y)
+        for i in range(len(index)):
+            pxpy[index[i,0],index[i,1]] = np.array([pxpy_re[index[i,0],index[i,1]]])
+
+        # X2_pro = np.array([pxpy[index[0,0],index[0,1]]])
+        X2_pro =  (joint_pro-pxpy) * (joint_pro-pxpy) * pxpy
+        # X2_pro[np.isnan(X2_pro)] = 0
 
         return X2_pro
+        # return pxpy, X2_pro
 
 
 
@@ -394,6 +434,32 @@ class SensorContrib(object):
                 raise ValueError("输入的位置必须大于等于0")
 
         return int((x - y) / 10)
+    
+    def plot_pic(self, act_times:int, joint_times:int, cir_num:int) -> plot:
+        pro_ave_accs = []
+        act_times = np.zeros((sensor_contrib._length),'int64')
+        joint_times = np.zeros((sensor_contrib._length,sensor_contrib._length),'int64')
+        for i in range(1,cir_num):
+            act_times_temp, joint_times_temp = sensor_contrib.circul(1)
+            act_times += act_times_temp
+            joint_times += joint_times_temp
+            pri_pro, cond_pro, pri_pro_re, joint_pro  = sensor_contrib.cal_cond_pro(act_times, joint_times, i)
+            MI_pro = sensor_contrib.cal_MI(act_times, joint_times, i)
+            X2_pro = sensor_contrib.cal_X2(act_times, joint_times, i)
+            cond_ave_accs.append(sensor_contrib.cal_ave_pre_accu(0,9,cond_pro))
+            MI_ave_accs.append(sensor_contrib.cal_ave_pre_accu(0,9,MI_pro))
+            X2_ave_accs.append(sensor_contrib.cal_ave_pre_accu(0,9,X2_pro))
+        plt.plot(np.arange(1,cir_num), cond_ave_accs, 'b')
+        plt.plot(np.arange(1,cir_num), MI_ave_accs, 'g')
+        plt.plot(np.arange(1,cir_num), X2_ave_accs, 'r')
+        plt.xlabel('Circulation Times')
+        plt.ylabel('Prediction Accuracy')
+        plt.xticks(np.arange(0,cir_num,(cir_num-1)/10))
+        plt.yticks(np.arange(0,1.1,0.1))
+        plt.show()
+
+
+
 
     @indexedproperty
     def trans_slot(self, key: float) -> float:
@@ -427,32 +493,57 @@ if __name__ == '__main__':
     sensor_contrib = SensorContrib()
 
     #查看list
-    act_times, joint_times = sensor_contrib.circul(10,5)
-    pri_pro, cond_pro, pri_pro_re, joint_pro  = sensor_contrib.cal_cond_pro(act_times, joint_times, 10)
-    sort_sensor, activated_t1, activated_t2 = sensor_contrib.cal_pre_accu(6,cond_pro,5)
-    np.set_printoptions(threshold= np.inf) 
-    # print(pri_pro)
-    print(sort_sensor)
-    print(activated_t1)
-    print(activated_t2)
-    # plt.imshow(cond_pro)
+    # act_times, joint_times = sensor_contrib.circul(10)
+    # # pri_pro, cond_pro, pri_pro_re, joint_pro  = sensor_contrib.cal_cond_pro(act_times, joint_times, 10)
+    # # MI_pro = sensor_contrib.cal_MI(act_times, joint_times, 10)
+    # X2_pro = sensor_contrib.cal_X2(act_times, joint_times, 10)
+    # pre_accu, sel_sensor, sort_sensor, activated_t1, activated_t2 = sensor_contrib.cal_pre_accu(1,X2_pro)
+    # # np.savetxt("cond_pro.csv", cond_pro, delimiter=",")
+    # np.savetxt("sort_sensor.csv", sort_sensor, delimiter=",")
+    # np.savetxt("sel_sensor.csv", sel_sensor, delimiter=",")
+    # # np.savetxt("pri_pro.csv", pri_pro, delimiter=",")
+    # # np.savetxt("MI_pro.csv", MI_pro, delimiter=",")
+    # np.savetxt("X2_pro.csv", X2_pro, delimiter=",")
+    # # np.savetxt("pxpy.csv", pxpy, delimiter=",")
+    # np.set_printoptions(threshold= np.inf) 
+    # # print(pri_pro)
+    # # print(cond_pro)
+    # # print(sort_sensor)
+    # print(activated_t1)
+    # print(activated_t2)
+    # # print(pre_accu)
+
+    # # pre_accu = sensor_contrib.cal_pre_accu(1,cond_pro)
+    # # print(pre_accu)
+    # # plt.imshow(cond_pro)
     
+
+
+
     #绘制三种概率的预测精度图
-    # accs = []
-    # act_times = np.zeros((sensor_contrib._length),'int64')
-    # joint_times = np.zeros((sensor_contrib._length,sensor_contrib._length),'int64')
-    # for i in range(1,21):
-    #     act_times_temp, joint_times_temp = sensor_contrib.circul(1,5)
-    #     act_times += act_times_temp
-    #     joint_times += joint_times_temp
-    #     pri_pro, cond_pro, pri_pro_re, joint_pro  = sensor_contrib.cal_cond_pro(act_times, joint_times, i)
-    #     # MI_pro = sensor_contrib.cal_MI(act_times, joint_times, i)
-    #     # X2_pro = sensor_contrib.cal_X2(act_times, joint_times, i)
-    #     accs.append(sensor_contrib.cal_pre_accu(3,cond_pro,5))
-    # plt.plot(np.arange(1,21), accs)
-    # plt.xlabel('Circulation Times')
-    # plt.ylabel('Prediction Accuracy')
-    # plt.show()
-    # print(accs)
+    cond_ave_accs = []
+    MI_ave_accs = []
+    X2_ave_accs = []
+    act_times = np.zeros((sensor_contrib._length),'int64')
+    joint_times = np.zeros((sensor_contrib._length,sensor_contrib._length),'int64')
+    for i in range(1,501):
+        act_times_temp, joint_times_temp = sensor_contrib.circul(1)
+        act_times += act_times_temp
+        joint_times += joint_times_temp
+        pri_pro, cond_pro, pri_pro_re, joint_pro  = sensor_contrib.cal_cond_pro(act_times, joint_times, i)
+        MI_pro = sensor_contrib.cal_MI(act_times, joint_times, i)
+        X2_pro = sensor_contrib.cal_X2(act_times, joint_times, i)
+        cond_ave_accs.append(sensor_contrib.cal_ave_pre_accu(0,9,cond_pro))
+        MI_ave_accs.append(sensor_contrib.cal_ave_pre_accu(0,9,MI_pro))
+        X2_ave_accs.append(sensor_contrib.cal_ave_pre_accu(0,9,X2_pro))
+    plt.plot(np.arange(1,501), cond_ave_accs, 'b')
+    plt.plot(np.arange(1,501), MI_ave_accs, 'g')
+    plt.plot(np.arange(1,501), X2_ave_accs, 'r')
+    plt.xlabel('Circulation Times')
+    plt.ylabel('Prediction Accuracy')
+    plt.xticks(np.arange(0,501,50))
+    plt.yticks(np.arange(0,1.1,0.1))
+    plt.show()
+    print(ave_accs)
 
     print('=> Generate done.')

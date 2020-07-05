@@ -26,7 +26,7 @@ class SensorGen(object):
     ''' The sensor generation class.'''
 
     def gen(self,
-            n=100,
+            n=5000,
             ranges=[1, 6],
             sensor_list=[1, 2, 3, 4, 5],
             save_path="data/sensors.csv",
