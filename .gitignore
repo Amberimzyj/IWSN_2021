@@ -13,3 +13,5 @@ __pycache__/
 /.eggs/
 *.csv
 *_pre_accu
+/src/pre_accu
+.DS_Store
