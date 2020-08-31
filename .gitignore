@@ -11,3 +11,5 @@ __pycache__/
 /.pytest_cache/
 /.pytest_cache/
 /.eggs/
+*.csv
+*_pre_accu

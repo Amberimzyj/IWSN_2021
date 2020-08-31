@@ -30,13 +30,15 @@ class SensorContrib(object):
     '''The sensor contribution class.'''
 
     def __init__(self,
-                 data_path: str = 'data/5000.csv',
+                 data_path: str = '6000.csv',
                  #active_thresh: float = 0.2,
-                 sensor_num_pre_t: int = 10,
+                 sensor_num_pre_t: int = 60,
                  trans_time_interal: int = 3,
-                 feature_sensor_dis: float = 3.,
-                 act_num = 6,
-                 bayes_type: str = 'MultinomialNB'):
+                #  feature_sensor_dis: float = 3.,
+                 act_num = 40,
+                 res_num = 16,
+                 bayes_type: str = 'MultinomialNB'
+                 ):
         """The sensor conttibution class.
 
         Keyword Arguments:
@@ -53,11 +55,12 @@ class SensorContrib(object):
         self._sensor_npt = sensor_num_pre_t
         self._n_timeslots = int(len(self._data) / self._sensor_npt)
         self._tti = trans_time_interal
-        self._feat_sensor_dis = feature_sensor_dis
+        # self._feat_sensor_dis = feature_sensor_dis
 
         self._path = data_path
         self._length = len(self._data)
         self._act_num = act_num
+        self.res_num = res_num
         self._naive_bayes = NavieBayes(bayes_type)
 
     # def static_stage(self, max_sensors: int = 10):
@@ -139,6 +142,8 @@ class SensorContrib(object):
 
         Returns:
             float: 预测精度
+            list: 预测节点集
+            list：触发节点集
         """
 
         # cond_pro = np.random.rand(self._length,self._length)
@@ -162,15 +167,16 @@ class SensorContrib(object):
                 pass
         sort_sensor = np.argsort(sel_sensor)[::-1] #从大到小排序条件概率p(x|i)对应的x
         # sort_sensor = np.flip(np.argsort(sel_sensor),axis=0)#从大到小排序条件概率p(x|i)对应的x
-        sort_sensor = sort_sensor[0:4] #每一行（y）取概率最大的前十个x
+        sort_sensor = sort_sensor[0: self.res_num] #每一行（y）取概率最大的前res_num个x————预测节点集
         # unique, counts = np.unique(sort_sensor, return_counts=True)
         # sort_sensor = unique[np.argsort(counts)[::-1]] #从大到小排序index
         # sort_sensor = np.argsort(sort_sensor)[::-1] #从大到小排序index
         # sort_sensor = sort_sensor[:self._act_num] #显示act_num个index
         activated_t2 = self.t_activate(t+1) #后一时刻触发的节点list
-        pre_accu = len(np.intersect1d(sort_sensor,activated_t2))/self._act_num
+        res_sensor = np.intersect1d(sort_sensor,activated_t2) #预留的触发节点集
+        pre_accu = len(res_sensor)/self._act_num
 
-        return pre_accu
+        return pre_accu, sort_sensor, res_sensor
         # return pre_accu, sel_sensor,sort_sensor,activated_t1, activated_t2
 
 
@@ -178,7 +184,8 @@ class SensorContrib(object):
 
         pre_accu = 0
         for i in range(t1,t2):
-            pre_accu += self.cal_pre_accu(i,probability)
+            accu, _ , _ = self.cal_pre_accu(i,probability)
+            pre_accu += accu
         ave_pre_accu = pre_accu/(t2-t1)
 
         return ave_pre_accu
@@ -207,16 +214,16 @@ class SensorContrib(object):
 
         return activated
 
-    def require_distance(self, distance: int) -> bool:
-        """判断两个节点间的距离是否小于阈值
+    # def require_distance(self, distance: int) -> bool:
+    #     """判断两个节点间的距离是否小于阈值
 
-        Args:
-            distance (int): 输入的节点间距离
+    #     Args:
+    #         distance (int): 输入的节点间距离
 
-        Returns:
-            bool: 返回判断结果
-        """
-        return distance < self._feat_sensor_dis and distance > 0
+    #     Returns:
+    #         bool: 返回判断结果
+    #     """
+    #     return distance < self._feat_sensor_dis and distance > 0
 
     # def select_sensor(self, activated: list, t: int) -> Tuple[list, list, list, int]:
     #     """根据上一时隙激活的节点选择后续的节点
@@ -469,6 +476,7 @@ class SensorContrib(object):
         np.savetxt('cond_pre_accu',cond_ave_accs)
         np.savetxt('MI_pre_accu',MI_ave_accs)
         np.savetxt('X2_pre_accu',X2_ave_accs)
+        np.savetxt('X2_pro',X2_pro)
         
 
 

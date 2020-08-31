@@ -26,11 +26,11 @@ class SensorGen(object):
     ''' The sensor generation class.'''
 
     def gen(self,
-            n=100,
+            n=6000,
             ranges=[1, 6],
             sensor_list=[1, 2, 3, 4, 5],
-            save_path="data/100.csv",
-            sensors_everyslot=10,  # 每个timeslot的sensor数量=钢板速度
+            save_path="6000.csv",
+            sensors_everyslot=60,  # 每个timeslot的sensor数量=钢板速度
             act_ratio=0.8
             ):  # 每个timeslot激活传感器数量的比例
         self._length = n
