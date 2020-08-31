@@ -106,7 +106,7 @@ class RTSN:
             list：触发的预分配节点index
             int:  存放固定预留RB上预留且触发且被抢占的节点数量
         """
-        X2_pro = self.gen_pro(6)
+        X2_pro = self.gen_pro(3)
         _ , pre_sensor , trigger_sensor = self.con.cal_pre_accu(t, X2_pro) #预测t时刻触发节点
         # print(pre_sensor)
         # print(trigger_sensor)
@@ -178,7 +178,7 @@ class RTSN:
         """
         _, s_ht = self.cal_5G_delay(t)
         q_duration = (self.t_tsn_max - self.t_tsn_min)/8 #相邻队列之间的传输时间差
-        q_delay = self.t_tsn_min + q_t * queue_duration #第q_t个队列的时延函数
+        q_delay = self.t_tsn_min + q_t * q_duration #第q_t个队列的时延函数
         t_tsn = self.H * np.trunc(s_ht * self.D * q_delay/self.r_tsn_min/self.t_cyc) * self.t_cyc
 
         return t_tsn
@@ -194,7 +194,7 @@ class RTSN:
             float: 各TSN队列传输时延
         """
         q_duration = (self.t_tsn_max - self.t_tsn_min)/8 #相邻队列之间的传输时间差
-        d = self.t_tsn_min + q * q_duration - self.t_ddl + t_5G
+        d = self.t_tsn_min + q * q_duration - self.t_ddl + t_5G[1]
         return d
 
 
@@ -240,7 +240,7 @@ def simulate(runs:int, time:int, rtsns) -> list:
         for t in range(time):
             t_5G.append(rtsn.cal_5G_delay(t))
             q_t.append(rtsn.cal_q_t(t_5G[t]))
-            t_tsn.append(rtsn.cal_tsn_delay(q_t[t]))
+            t_tsn.append(rtsn.cal_tsn_delay(t, q_t[t]))
             inte_delay.append((t_5G[t] + t_tsn[t]))
     return t_5G, t_tsn, q_t, inte_delay
 

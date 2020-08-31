@@ -17,12 +17,12 @@ from typing import List, Tuple, Union
 from indexedproperty import indexedproperty
 import numpy as np
 import pandas as pd
-from sklearn.naive_bayes import MultinomialNB
+# from sklearn.naive_bayes import MultinomialNB
 from matplotlib import pyplot as plt
 from tqdm.auto import tqdm
 
 from iwsn.utils.patterns import singleton
-from iwsn.utils.naive_bayes import NavieBayes
+# from iwsn.utils.naive_bayes import NavieBayes
 
 
 @singleton
@@ -61,7 +61,7 @@ class SensorContrib(object):
         self._length = len(self._data)
         self._act_num = act_num
         self.res_num = res_num
-        self._naive_bayes = NavieBayes(bayes_type)
+        # self._naive_bayes = NavieBayes(bayes_type)
 
     # def static_stage(self, max_sensors: int = 10):
     #     if self._n_timeslots <= 2:
