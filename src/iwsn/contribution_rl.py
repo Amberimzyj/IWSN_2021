@@ -476,7 +476,7 @@ class SensorContrib(object):
         np.savetxt('MI_pre_accu', MI_ave_accs)
         np.savetxt('X2_pre_accu', X2_ave_accs)
         # np.savetxt('X2_pro', X2_pro)
-        np.savez_compressed('data/X2_pro.npz', X2_pro)
+        np.savez_compressed('data/X2_pro.npz', arr=X2_pro)
 
     @ indexedproperty
     def trans_slot(self, key: float) -> float:
