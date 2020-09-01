@@ -15,7 +15,7 @@ from iwsn import contribution_rl
 
 class RTSN(object):
     def __init__(self,
-                 data_path: str = 'data/X2_pro.csv',
+                 data_path: str = 'data/X2_pro.npz',
                  #TTI = 0,
                  C=4,
                  subslot=15,
@@ -33,7 +33,8 @@ class RTSN(object):
         # if not os.path.exists(data_path):
         #     raise FileNotFoundError(f'data path "{data_path}" not exists.')
 
-        self.X2_pro = np.loadtxt(data_path)  # 读取卡方概率
+        # self.X2_pro = np.loadtxt(data_path)  # 读取卡方概率
+        self.X2_pro = np.load(data_path)['arr']
 
         # self.TTI = TTI #记录TTI
         self.C = C  # 信道数
