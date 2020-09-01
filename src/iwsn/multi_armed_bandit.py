@@ -34,10 +34,10 @@ class RTSN:
                 r_tsn_min = 20,
                 t_cyc = 5):
         
-        # if not os.path.exists(data_path):
-        #     raise FileNotFoundError(f'data path "{data_path}" not exists.')
+        if not os.path.exists(data_path):
+            raise FileNotFoundError(f'data path "{data_path}" not exists.')
 
-        # self.X2_pro = pd.read_csv(data_path) #读取卡方概率
+        self.X2_pro = np.loadtxt(data_path) #读取卡方概率
         
 
         #self.TTI = TTI #记录TTI
@@ -66,17 +66,18 @@ class RTSN:
     #      self.inte_delay = [] #存放每个TTI的总时延
 
     def gen_pro(self, cir_num:int):
-        act_times = np.zeros((self.con._length),'int64')
-        joint_times = np.zeros((self.con._length,self.con._length),'int64')
+        # act_times = np.zeros((self.con._length),'int64')
+        # joint_times = np.zeros((self.con._length,self.con._length),'int64')
         
-        for i in range(1,cir_num):
-            act_times_temp, joint_times_temp = self.con.circul(1)
-            act_times += act_times_temp
-            joint_times += joint_times_temp
-            pri_pro, cond_pro, pri_pro_re, joint_pro  = self.con.cal_cond_pro(act_times, joint_times, i)
-            X2_pro = self.con.cal_X2(act_times, joint_times, i)
+        # for i in range(1,cir_num):
+        #     act_times_temp, joint_times_temp = self.con.circul(1)
+        #     act_times += act_times_temp
+        #     joint_times += joint_times_temp
+        #     pri_pro, cond_pro, pri_pro_re, joint_pro  = self.con.cal_cond_pro(act_times, joint_times, i)
+        #     X2_pro = self.con.cal_X2(act_times, joint_times, i)
         
-        return X2_pro
+        # return X2_pro
+        return self.X2_pro
 
     def data_gen_dynamic_tc(self) -> int:
         """生成动态接入部分的TC流
@@ -228,21 +229,28 @@ def simulate(runs:int, time:int, rtsns) -> list:
     Returns:
         list, list, list, list: 5G时延, TSN时延, TSN队列优先级, 总时延
     """
-    rtsn = RTSN()
+    # rtsn = RTSN()
     # delays = np.zeros((len(rtsns), runs, time))
-    t_5G = [] #存放5G时延
-    q_t = [] #存放队列级数
-    t_tsn = [] #存放TSN时延
-    inte_delay = [] #存放总时延
-    # for i, rtsn in enumerate(rtsns):
-    for r in trange(runs):
-        # RTSN.reset()
-        for t in range(time):
-            t_5G.append(rtsn.cal_5G_delay(t))
-            q_t.append(rtsn.cal_q_t(t_5G[t]))
-            t_tsn.append(rtsn.cal_tsn_delay(t, q_t[t]))
-            inte_delay.append((t_5G[t] + t_tsn[t]))
-    return t_5G, t_tsn, q_t, inte_delay
+    t_5Gs = np.zeros((len(rtsns), runs, times)) #存放5G时延
+    q_ts = np.zeros((len(rtsns), runs, times)) #存放队列级数
+    t_tsns = np.zeros((len(rtsns), runs, times)) #存放TSN时延
+    inte_delays = np.zeros((len(rtsns), runs, times)) #存放总时延
+    for i, rtsn in enumerate(rtsns):
+        for r in trange(runs):
+            # RTSN.reset()
+            for t in range(time):
+                t_5G = rtsn.cal_5G_delay(t)
+                t_5Gs[i, r, t] = t_5G
+                q_t = rtsn.cal_q_t(t_5G[t])
+                q_ts[i, r, t] = q_t
+                t_tsn = rtsn.cal_tsn_delay(t, q_t[t])
+                t_tsns[i, r, t] = t_tsn
+                inte_de lays[i, r, t] = inte_delay
+                # t_5G.append(rtsn.cal_5G_delay(t))
+                # q_t.append(rtsn.cal_q_t(t_5G[t]))
+                # t_tsn.append(rtsn.cal_tsn_delay(t, q_t[t]))
+                # inte_delay.append((t_5G[t] + t_tsn[t]))
+    return t_5Gs, t_tsns, q_ts, inte_delays
 
 def test(runs = 10, time = 10):
     rtsn = RTSN()
