@@ -16,7 +16,7 @@ from iwsn import contribution_rl
 
 class RTSN(object):
     def __init__(self,
-                 data_path: str = 'X2_pro.npz',
+                 data_path: str = 'data/X2_pro.npz',
                  #TTI = 0,
                  C=4,
                  subslot=15,
