@@ -30,20 +30,20 @@ class SensorContrib(object):
     '''The sensor contribution class.'''
 
     def __init__(self,
-                 data_path: str = '6000.csv',
-                 #active_thresh: float = 0.2,
+                 data_path: str = 'data/6000.csv',
+                 # active_thresh: float = 0.2,
                  sensor_num_pre_t: int = 60,
                  trans_time_interal: int = 3,
-                #  feature_sensor_dis: float = 3.,
-                 act_num = 40,
-                 res_num = 16,
+                 #  feature_sensor_dis: float = 3.,
+                 act_num=40,
+                 res_num=16,
                  bayes_type: str = 'MultinomialNB'
                  ):
         """The sensor conttibution class.
 
         Keyword Arguments:
             data_path {str} -- Path to load dataframe. (default: {'data/sensors.csv'})
- 
+
         Raises:
             FileNotFoundError: The input data path not found.
         """
@@ -51,7 +51,7 @@ class SensorContrib(object):
             raise FileNotFoundError(f'data path "{data_path}" not exists.')
 
         self._data = pd.read_csv(data_path)
-        #self._active_th = active_thresh 
+        # self._active_th = active_thresh
         self._sensor_npt = sensor_num_pre_t
         self._n_timeslots = int(len(self._data) / self._sensor_npt)
         self._tti = trans_time_interal
@@ -96,12 +96,12 @@ class SensorContrib(object):
     #                   ) / len(activated_t1)
     #         print(f'slot: {t}, acc: {acc}')
 
-            # ave_pp_accs[t-1] = self._nb_cal_succ_predict_radio(
-            #     t, max_sensors, data_X, data_y, 'posterior_prob')
-            # ave_mi_accs[t-1] = self._nb_cal_succ_predict_radio(
-            #     t, max_sensors, data_X, data_y, 'mutual_information')
-            # ave_chi_accs[t-1] = self._nb_cal_succ_predict_radio(
-            #     t, max_sensors, data_X, data_y, 'chi_square_test')
+        # ave_pp_accs[t-1] = self._nb_cal_succ_predict_radio(
+        #     t, max_sensors, data_X, data_y, 'posterior_prob')
+        # ave_mi_accs[t-1] = self._nb_cal_succ_predict_radio(
+        #     t, max_sensors, data_X, data_y, 'mutual_information')
+        # ave_chi_accs[t-1] = self._nb_cal_succ_predict_radio(
+        #     t, max_sensors, data_X, data_y, 'chi_square_test')
 
         # ave_pp_accs = ave_pp_accs.mean(axis=0)
         # ave_mi_accs = ave_mi_accs.mean(axis=0)
@@ -132,8 +132,7 @@ class SensorContrib(object):
 
     #     return accs
 
-    
-    def cal_pre_accu(self, t:int, probability: np.ndarray) -> float:
+    def cal_pre_accu(self, t: int, probability: np.ndarray) -> float:
         """计算预测精度
 
         Args:
@@ -148,15 +147,15 @@ class SensorContrib(object):
 
         # cond_pro = np.random.rand(self._length,self._length)
         # act_times, joint_times, pri_pro, cond_pro = sensor_contirb.circul(cir_num)
-        activated_t1 = self.t_activate(t) #前一时刻触发的节点list
+        activated_t1 = self.t_activate(t)  # 前一时刻触发的节点list
         # sel_sensor = np.zeros((self._length,self._length))
         # sort_sensor = np.zeros((self._length,self._length))
         # for i in range(self._sensor_npt):
         #     sel_sensor[i] = cond_pro[activated_t1[i]]
         sel_sensor = probability[activated_t1]
-        sel_sensor = np.cumsum(sel_sensor,axis=0) #将每一个已触发节点对应的特征节点的条件概率按行相加
+        sel_sensor = np.cumsum(sel_sensor, axis=0)  # 将每一个已触发节点对应的特征节点的条件概率按行相加
         if len(sel_sensor) > 0:
-            sel_sensor = sel_sensor[-1] #只取最后一行，记录了预测节点对于已触发节点的条件概率的总和
+            sel_sensor = sel_sensor[-1]  # 只取最后一行，记录了预测节点对于已触发节点的条件概率的总和
         elif len(sel_sensor) == 0:
             pass
         # sel_sensor = sel_sensor.ravel()[np.flatnonzero(sel_sensor)]
@@ -165,37 +164,32 @@ class SensorContrib(object):
                 sel_sensor[i] += 2
             else:
                 pass
-        sort_sensor = np.argsort(sel_sensor)[::-1] #从大到小排序条件概率p(x|i)对应的x
+        sort_sensor = np.argsort(sel_sensor)[::-1]  # 从大到小排序条件概率p(x|i)对应的x
         # sort_sensor = np.flip(np.argsort(sel_sensor),axis=0)#从大到小排序条件概率p(x|i)对应的x
-        sort_sensor = sort_sensor[0: self.res_num] #每一行（y）取概率最大的前res_num个x————预测节点集
+        # 每一行（y）取概率最大的前res_num个x————预测节点集
+        sort_sensor = sort_sensor[0: self.res_num]
         # unique, counts = np.unique(sort_sensor, return_counts=True)
         # sort_sensor = unique[np.argsort(counts)[::-1]] #从大到小排序index
         # sort_sensor = np.argsort(sort_sensor)[::-1] #从大到小排序index
         # sort_sensor = sort_sensor[:self._act_num] #显示act_num个index
-        activated_t2 = self.t_activate(t+1) #后一时刻触发的节点list
-        res_sensor = np.intersect1d(sort_sensor,activated_t2) #预留的触发节点集
+        activated_t2 = self.t_activate(t+1)  # 后一时刻触发的节点list
+        res_sensor = np.intersect1d(sort_sensor, activated_t2)  # 预留的触发节点集
         pre_accu = len(res_sensor)/self._act_num
 
         return pre_accu, sort_sensor, res_sensor
         # return pre_accu, sel_sensor,sort_sensor,activated_t1, activated_t2
 
-
-    def cal_ave_pre_accu(self, t1:int, t2:int, probability: np.ndarray ) -> float:
+    def cal_ave_pre_accu(self, t1: int, t2: int, probability: np.ndarray) -> float:
 
         pre_accu = 0
-        for i in range(t1,t2):
-            accu, _ , _ = self.cal_pre_accu(i,probability)
+        for i in range(t1, t2):
+            accu, _, _ = self.cal_pre_accu(i, probability)
             pre_accu += accu
         ave_pre_accu = pre_accu/(t2-t1)
 
         return ave_pre_accu
 
-
-
-        
-
     def t_activate(self, t: int) -> List[int]:
-
         """Calculate the activate sensors at timeslot t.
 
         Arguments:
@@ -251,7 +245,7 @@ class SensorContrib(object):
     #                 data_y.append(y)
 
     #     return data_X_index, data_X, data_y, length
-    
+
     # def cal_pro(self, cir_num:int, y: int, x: int, yx_num:int) -> np.ndarray:
     #     """最大似然：估计上一时刻触发节点y和节点x之间的条件概率、节点y的先验概率和xy的联合概率
 
@@ -266,7 +260,7 @@ class SensorContrib(object):
     #     """
     #     return np.ndarray[y][x] = yx_num/cir_num
 
-    def circul(self, cir_num:int) -> np.ndarray:
+    def circul(self, cir_num: int) -> np.ndarray:
         """模拟传感器循环触发
 
         Args:
@@ -277,24 +271,26 @@ class SensorContrib(object):
             np.ndarray: 节点触发次数、共同触发次数
         """
 
-        act_times = np.zeros((self._length),'int64') #记录每个节点在历次循环中触发的次数
-        joint_times = np.zeros((self._length,self._length),'int64') #记录两个节点共同触发的次数
-    
-        #记录各种触发次数
-        for i in tqdm(range(cir_num)):
-            for t in tqdm(range(self._n_timeslots), leave=False):
-                activated_t1 = self.t_activate(t) #t时刻触发的节点
+        act_times = np.zeros((self._length), 'int64')  # 记录每个节点在历次循环中触发的次数
+        joint_times = np.zeros(
+            (self._length, self._length), 'int64')  # 记录两个节点共同触发的次数
+
+        # 记录各种触发次数
+        for i in range(cir_num):
+            for t in range(self._n_timeslots):
+                activated_t1 = self.t_activate(t)  # t时刻触发的节点
                 if t < (self._n_timeslots - 1):
-                    activated_t2 = self.t_activate(t+1) #t+1时刻触发的节点
-                    joint_times[np.ix_(activated_t1,activated_t2)] += 1
+                    activated_t2 = self.t_activate(t+1)  # t+1时刻触发的节点
+                    joint_times[np.ix_(activated_t1, activated_t2)] += 1
                 act_times[activated_t1] += 1
-            self._data["transmission probability"] = [random.uniform(0, 1) for i in range(self._length)]  #每循环一次重新生成触发概率
-            
+            self._data["transmission probability"] = np.random.uniform(
+                0, 1, self._length)
+            # self._data["transmission probability"] = [random.uniform(
+            #     0, 1) for i in range(self._length)]  # 每循环一次重新生成触发概率
+
         return act_times, joint_times
 
-
     def cal_cond_pro(self, act_times: np.ndarray, joint_times: np.ndarray, cir_num: int) -> np.ndarray:
-
         """计算条件概率
 
         Args:
@@ -305,12 +301,12 @@ class SensorContrib(object):
         Returns:
             np.ndarray: 先验概率，条件概率，先验概率倒数，联合概率
         """
-    
-        #计算各种触发概率
-        pri_pro = np.zeros((self._length),'float') #存放先验概率
-        pri_pro_re = np.zeros((self._length),'float') #存放先验概率的倒数，便于计算条件概率
-        cond_pro = np.zeros((self._length,self._length),'float') #存放条件概率
-        joint_pro = np.zeros((self._length,self._length),'float') #存放联合概率
+
+        # 计算各种触发概率
+        pri_pro = np.zeros((self._length), 'float')  # 存放先验概率
+        pri_pro_re = np.zeros((self._length), 'float')  # 存放先验概率的倒数，便于计算条件概率
+        cond_pro = np.zeros((self._length, self._length), 'float')  # 存放条件概率
+        joint_pro = np.zeros((self._length, self._length), 'float')  # 存放联合概率
         # for a in tqdm(range(self._length)):
         #     pri_pro[a] = act_times[a]/cir_num
         #     for b in tqdm(range(self._length), leave=False):
@@ -323,16 +319,16 @@ class SensorContrib(object):
             if pri_pro[j] != 0:
                 pri_pro_re[j] = 1/pri_pro[j]
             else:
-                pri_pro_re[j] = 0  
-        pri_pro_re = np.tile(pri_pro_re,(self._length,1)).T #扩展先验概率倒数至self._length维并转置，方便进行矩阵运算
+                pri_pro_re[j] = 0
+        # 扩展先验概率倒数至self._length维并转置，方便进行矩阵运算
+        pri_pro_re = np.tile(pri_pro_re, (self._length, 1)).T
         # cond_pro = np.dot((joint_times/cir_num),(np.matrix(pri_pro).I)) #计算条件概率
         joint_pro = joint_times/cir_num
-        cond_pro = joint_pro * pri_pro_re #计算条件概率
-                
-        return  pri_pro, cond_pro, pri_pro_re, joint_pro
+        cond_pro = joint_pro * pri_pro_re  # 计算条件概率
 
-    
-    def cal_MI(self, act_times:np.ndarray, joint_times:np.ndarray, cir_num: int) -> float:
+        return pri_pro, cond_pro, pri_pro_re, joint_pro
+
+    def cal_MI(self, act_times: np.ndarray, joint_times: np.ndarray, cir_num: int) -> float:
         """计算互信息
 
         Args:
@@ -342,17 +338,21 @@ class SensorContrib(object):
         Returns:
             float: 互信息概率
         """
-        MI_pro = np.zeros((self._length,self._length),'float')
-        pri_pro, cond_pro, pri_pro_re, joint_pro = self.cal_cond_pro(act_times, joint_times, cir_num)
-        pxpy = np.expand_dims(pri_pro,axis = 1) * np.expand_dims(pri_pro,axis = 0) #计算p(x)*p(y)
-        pxpy = np.where(pxpy>0,1/pxpy,0)
-        MI_pro = joint_pro * np.log2(np.where((joint_pro * pxpy) > 0, joint_pro * pxpy, 0)) #计算互信息
-        MI_pro[np.isnan(MI_pro)] = 0 #将nan替换为0
-        
+        MI_pro = np.zeros((self._length, self._length), 'float')
+        pri_pro, cond_pro, pri_pro_re, joint_pro = self.cal_cond_pro(
+            act_times, joint_times, cir_num)
+        pxpy = np.expand_dims(pri_pro, axis=1) * \
+            np.expand_dims(pri_pro, axis=0)  # 计算p(x)*p(y)
+        pxpy = np.where(pxpy > 0, 1/pxpy, 0)
+        MI_pro = joint_pro * \
+            np.log2(np.where((joint_pro * pxpy) > 0,
+                             joint_pro * pxpy, 0))  # 计算互信息
+        MI_pro[np.isnan(MI_pro)] = 0  # 将nan替换为0
+
         return MI_pro
         # return pxpy
 
-    def cal_X2(self, act_times:np.ndarray, joint_times:np.ndarray, cir_num: int) -> float:
+    def cal_X2(self, act_times: np.ndarray, joint_times: np.ndarray, cir_num: int) -> float:
         """计算卡方概率
 
         Args:
@@ -363,29 +363,27 @@ class SensorContrib(object):
             float: 卡方概率
         """
 
-        pri_pro, cond_pro, pri_pro_re, joint_pro = self.cal_cond_pro(act_times, joint_times, cir_num)
+        pri_pro, cond_pro, pri_pro_re, joint_pro = self.cal_cond_pro(
+            act_times, joint_times, cir_num)
 
-        #计算p(x)*p(y)
-        pxpy_re = np.expand_dims(pri_pro,axis = 1) * np.expand_dims(pri_pro,axis = 0) #计算临时p(x)*p(y)
-        pxpy_re = np.where(pxpy_re>0,1/pxpy_re,0)
-        index = np.array(np.nonzero(cond_pro)).T #取出条件概率不为0的index
-        pxpy = np.zeros((self._length,self._length),'float') #存放整形后的p(x)*p(y)
+        # 计算p(x)*p(y)
+        pxpy_re = np.expand_dims(pri_pro, axis=1) * \
+            np.expand_dims(pri_pro, axis=0)  # 计算临时p(x)*p(y)
+        pxpy_re = np.where(pxpy_re > 0, 1/pxpy_re, 0)
+        index = np.array(np.nonzero(cond_pro)).T  # 取出条件概率不为0的index
+        pxpy = np.zeros((self._length, self._length),
+                        'float')  # 存放整形后的p(x)*p(y)
         for i in range(len(index)):
-            pxpy[index[i,0],index[i,1]] = np.array([pxpy_re[index[i,0],index[i,1]]])
+            pxpy[index[i, 0], index[i, 1]] = np.array(
+                [pxpy_re[index[i, 0], index[i, 1]]])
 
         # X2_pro = np.array([pxpy[index[0,0],index[0,1]]])
-        X2_pro =  (joint_pro-pxpy) * (joint_pro-pxpy) * pxpy
+        X2_pro = (joint_pro-pxpy) * (joint_pro-pxpy) * pxpy
         # X2_pro[np.isnan(X2_pro)] = 0
 
         return X2_pro
         # return pxpy, X2_pro
 
-
-
-
-
-            
-        
     # def nb_gen_train_data(self, activated_t1: list, activated_t2: list) -> Tuple[list, list, list]:
     #     """生成朴素贝叶斯训练数据
 
@@ -441,8 +439,8 @@ class SensorContrib(object):
     #             raise ValueError("输入的位置必须大于等于0")
 
     #     return int((x - y) / 10)
-    
-    def plot_pic(self, act_times:int, joint_times:int, cir_num:int) :
+
+    def plot_pic(self, act_times: int, joint_times: int, cir_num: int):
         """绘图
 
         Args:
@@ -451,59 +449,58 @@ class SensorContrib(object):
             cir_num (int): 循环次数
         """
         pro_ave_accs = []
-        act_times = np.zeros((self._length),'int64')
-        joint_times = np.zeros((self._length,self._length),'int64')
-        for i in range(1,cir_num):
+        act_times = np.zeros((self._length), 'int64')
+        joint_times = np.zeros((self._length, self._length), 'int64')
+        for i in range(1, cir_num):
             act_times_temp, joint_times_temp = self.circul(1)
             act_times += act_times_temp
             joint_times += joint_times_temp
-            pri_pro, cond_pro, pri_pro_re, joint_pro  = self.cal_cond_pro(act_times, joint_times, i)
+            pri_pro, cond_pro, pri_pro_re, joint_pro = self.cal_cond_pro(
+                act_times, joint_times, i)
             MI_pro = self.cal_MI(act_times, joint_times, i)
             X2_pro = self.cal_X2(act_times, joint_times, i)
-            cond_ave_accs.append(self.cal_ave_pre_accu(0,9,cond_pro))
-            MI_ave_accs.append(self.cal_ave_pre_accu(0,9,MI_pro))
-            X2_ave_accs.append(self.cal_ave_pre_accu(0,9,X2_pro))
-        plt.plot(np.arange(1,cir_num), cond_ave_accs, 'b', label = 'CP')
-        plt.plot(np.arange(1,cir_num), MI_ave_accs, 'g', label = 'MI')
-        plt.plot(np.arange(1,cir_num), X2_ave_accs, 'r', label = 'X2')
+            cond_ave_accs.append(self.cal_ave_pre_accu(0, 9, cond_pro))
+            MI_ave_accs.append(self.cal_ave_pre_accu(0, 9, MI_pro))
+            X2_ave_accs.append(self.cal_ave_pre_accu(0, 9, X2_pro))
+        plt.plot(np.arange(1, cir_num), cond_ave_accs, 'b', label='CP')
+        plt.plot(np.arange(1, cir_num), MI_ave_accs, 'g', label='MI')
+        plt.plot(np.arange(1, cir_num), X2_ave_accs, 'r', label='X2')
         plt.xlabel('Circulation Times')
         plt.ylabel('Prediction Accuracy')
-        plt.xticks(np.arange(0,cir_num,(cir_num-1)/10))
-        plt.yticks(np.arange(0,1.1,0.1))
-        plt.legend(loc = 0,ncol = 1)
+        plt.xticks(np.arange(0, cir_num, (cir_num-1)/10))
+        plt.yticks(np.arange(0, 1.1, 0.1))
+        plt.legend(loc=0, ncol=1)
         plt.show()
 
-        np.savetxt('cond_pre_accu',cond_ave_accs)
-        np.savetxt('MI_pre_accu',MI_ave_accs)
-        np.savetxt('X2_pre_accu',X2_ave_accs)
-        np.savetxt('X2_pro',X2_pro)
-        
+        np.savetxt('cond_pre_accu', cond_ave_accs)
+        np.savetxt('MI_pre_accu', MI_ave_accs)
+        np.savetxt('X2_pre_accu', X2_ave_accs)
+        np.savetxt('X2_pro', X2_pro)
 
-
-    @indexedproperty
+    @ indexedproperty
     def trans_slot(self, key: float) -> float:
         return self._data.at[key, 'transmission slot']
 
-    @trans_slot.setter
+    @ trans_slot.setter
     def trans_slot(self, key: int, value: float):
         self._data.at[key, 'transmission slot'] = value
 
-    @indexedproperty
+    @ indexedproperty
     def location(self, key: int) -> int:
         return self._data.at[key, 'location']
 
-    @location.setter
+    @ location.setter
     def location(self, key: int, value: int):
         if type(value) != int:
             raise TypeError('The input value type must be int.')
 
         self._data.at[key, 'location'] = str(value)
 
-    @indexedproperty
+    @ indexedproperty
     def trans_prob(self, key: int) -> float:
         return self._data.at[key, 'transmission probability']
 
-    @trans_prob.setter
+    @ trans_prob.setter
     def trans_prob(self, key: int, value: float):
         self._data.at[key, 'transmission probability'] = value
 
@@ -511,7 +508,7 @@ class SensorContrib(object):
 if __name__ == '__main__':
     sensor_contrib = SensorContrib()
 
-    #查看list
+    # 查看list
     # act_times, joint_times = sensor_contrib.circul(10)
     # # pri_pro, cond_pro, pri_pro_re, joint_pro  = sensor_contrib.cal_cond_pro(act_times, joint_times, 10)
     # # MI_pro = sensor_contrib.cal_MI(act_times, joint_times, 10)
@@ -524,7 +521,7 @@ if __name__ == '__main__':
     # # np.savetxt("MI_pro.csv", MI_pro, delimiter=",")
     # np.savetxt("X2_pro.csv", X2_pro, delimiter=",")
     # # np.savetxt("pxpy.csv", pxpy, delimiter=",")
-    # np.set_printoptions(threshold= np.inf) 
+    # np.set_printoptions(threshold= np.inf)
     # # print(pri_pro)
     # # print(cond_pro)
     # # print(sort_sensor)
@@ -535,16 +532,14 @@ if __name__ == '__main__':
     # # pre_accu = sensor_contrib.cal_pre_accu(1,cond_pro)
     # # print(pre_accu)
     # # plt.imshow(cond_pro)
-    
 
-
-
-    #绘制三种概率的预测精度图
+    # 绘制三种概率的预测精度图
     cond_ave_accs = []
     MI_ave_accs = []
     X2_ave_accs = []
-    act_times = np.zeros((sensor_contrib._length),'int64')
-    joint_times = np.zeros((sensor_contrib._length,sensor_contrib._length),'int64')
+    act_times = np.zeros((sensor_contrib._length), 'int64')
+    joint_times = np.zeros(
+        (sensor_contrib._length, sensor_contrib._length), 'int64')
     sensor_contrib.plot_pic(act_times, joint_times, 11)
     # for i in range(1,501):
     #     act_times_temp, joint_times_temp = sensor_contrib.circul(1)
