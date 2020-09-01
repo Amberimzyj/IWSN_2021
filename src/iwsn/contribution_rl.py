@@ -475,7 +475,7 @@ class SensorContrib(object):
         np.savetxt('cond_pre_accu',cond_ave_accs)
         np.savetxt('MI_pre_accu',MI_ave_accs)
         np.savetxt('X2_pre_accu',X2_ave_accs)
-        np.savetxt('X2_pro.csv',X2_pro)
+        np.savez_compressed('data/X2_pro.npz', arr = X2_pro)
         
 
     @ indexedproperty

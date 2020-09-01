@@ -20,7 +20,7 @@ class RTSN(object):
                  #TTI = 0,
                  C=4,
                  subslot=15,
-                 t_rb=5,
+                 t_rb=10, #8.888 < t_rb < 12.7777
                  res_subslot_num=4,
                  signal_ratio=0.15,
                  t_tsn_max=40,
@@ -147,7 +147,7 @@ class RTSN(object):
         return ns_num, ns_index, preempt_num
 
     def cal_5G_delay(self, t: int) -> float:
-        """计算5G通信时延
+        """计算5G通信时延，为使q_t属于[0,7],5G时延必须属于[64,92
 
         Args:
             t (int): 当前TTI
@@ -159,14 +159,12 @@ class RTSN(object):
         tc_num = self.data_gen_dynamic_tc()
         trigger_num, _, trigger_preempt_num = self.reserve_sensor(t)
         ns_num, _, preempt_num = self.data_gen_ns()
-        s_ht = (1 - 1/self.C) * self.res_rb_num + \
-            tc_num + ns_num - trigger_preempt_num
+        s_ht = (1 - 1/self.C) * self.res_rb_num + tc_num + ns_num - trigger_preempt_num
         # dict = {'self.res_rb_num:': self.res_rb_num, 'tc_num:': tc_num, 'ns_num:': ns_num, 'self.res_subslot_num:': self.res_subslot_num,
         #         'preempt_num:': preempt_num, 'trigger_preempt_num:': trigger_preempt_num, 'self.signal_ratio:': self.signal_ratio, 's_ht:': s_ht, 'self.t_rb:': self.t_rb}
         # print(dict)
         # S_ht = self.res_num - np.trunc(self.res_subslot_num - (trigger_num + preempt_num - trigger_preempt_num))
-        t_5G = np.trunc((self.res_rb_num + (tc_num + ns_num - (self.res_subslot_num - (
-            preempt_num - trigger_preempt_num)))*(1 + self.signal_ratio))/(self.C * s_ht))*self.t_rb
+        t_5G = np.trunc((self.res_rb_num + (tc_num + ns_num - (self.res_subslot_num - (preempt_num - trigger_preempt_num)))*(1 + self.signal_ratio))/(self.C * s_ht))*self.t_rb
 
         return t_5G, s_ht
 
@@ -200,7 +198,9 @@ class RTSN(object):
             float: 各TSN队列传输时延
         """
         q_duration = (self.t_tsn_max - self.t_tsn_min)/8  # 相邻队列之间的传输时间差
-        d = self.t_tsn_min + q * q_duration - self.t_ddl + t_5G[1]
+        # d = self.t_tsn_min + q * q_duration - self.t_ddl + t_5G[1]
+        d = self.t_tsn_min + q * q_duration - self.t_ddl + t_5G
+        
         return d
 
     def cal_q_t(self, t_5G: float) -> int:
@@ -235,25 +235,33 @@ def simulate(runs:int, time:int, rtsns) -> list:
     """
     # rtsn = RTSN()
     # delays = np.zeros((len(rtsns), runs, time))
-    t_5Gs = np.zeros((len(rtsns), runs, time)) #存放5G时延
-    q_ts = np.zeros((len(rtsns), runs, time)) #存放队列级数
-    t_tsns = np.zeros((len(rtsns), runs, time)) #存放TSN时延
-    inte_delays = np.zeros((len(rtsns), runs, time)) #存放总时延
+    # t_5G_sum = np.zeros((len(rtsns), runs, time))
+    t_5Gs = [] #存放5G时延
+    q_ts = [] #存放队列级数
+
+    t_tsns = [] #存放TSN时延
+    inte_delays = [] #存放总时延
     for i, rtsn in enumerate(rtsns):
         for r in trange(runs):
             # RTSN.reset()
             for t in range(time):
                 t_5G = rtsn.cal_5G_delay(t)
-                t_5Gs[i, r, t] = t_5G
-                q_t = rtsn.cal_q_t(t_5G[t])
-                q_ts[i, r, t] = q_t
+                t_5Gs.append(t_5G[1])
+
+                q_t = rtsn.cal_q_t(t_5G[1])
+                q_ts.qppend(q_t) 
+
                 t_tsn = rtsn.cal_tsn_delay(t, q_t[t])
-                t_tsns[i, r, t] = t_tsn
-                inte_delays[i, r, t] = inte_delay
+                t_tsns.append(t_tsn)
+
+                inte_delay = t_5G[1] + t_tsn[t]
+                inte_delays.append(inte_delay)
+
                 # t_5G.append(rtsn.cal_5G_delay(t))
                 # q_t.append(rtsn.cal_q_t(t_5G[t]))
                 # t_tsn.append(rtsn.cal_tsn_delay(t, q_t[t]))
                 # inte_delay.append((t_5G[t] + t_tsn[t]))
+
     return t_5Gs, t_tsns, q_ts, inte_delays
 
 
