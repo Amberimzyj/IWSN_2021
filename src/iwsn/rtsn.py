@@ -24,13 +24,15 @@ class RTSN(object):
                  t_rb=300, #8.888 < t_rb < 12.7777
                  res_subslot_num=4,
                  signal_ratio=0.75,
-                 t_tsn_max=40,
+                 t_tsn_max=92,
                  t_tsn_min=8,
-                 t_ddl=130,
+                 t_ddl=300,
+                #  q_duration = 4,
                 #  q=8,
-                 D=60,
+                 D =60,
                  H=5,
                  r_tsn_min=4000,
+                 max_t=10,
                  t_cyc=1.75):
 
         if not os.path.exists(data_path):
@@ -48,6 +50,7 @@ class RTSN(object):
         self.t_tsn_max = t_tsn_max  # TSN网络做大时延
         self.t_tsn_min = t_tsn_min  # TSN网络最小时延
         self.t_ddl = t_ddl  # 数据ddl
+        # self.q_duration = 4 #TSN不同队列的间隔时延
         # self.q = q #TSN队列数
         self.D = D  # 假设一个RB传输的数据量是6kbit
         self.H = H  # TSN网络跳数
@@ -55,6 +58,7 @@ class RTSN(object):
         self.t_cyc = t_cyc  # TSN网关循环转发时间
         self.res_rb_num = self.C * self.res_subslot_num  # 预留RB数量
         self.con = contribution_rl.SensorContrib(res_num=res_subslot_num * C)
+        self.max_t = max_t
 
     # def reset(self):
     #      self.TTI = 0
@@ -81,21 +85,23 @@ class RTSN(object):
         # return X2_pro
         return self.X2_pro
 
-    def data_gen_dynamic_tc(self) -> int:
+    def data_gen_dynamic_tc(self, t) -> int:
         """生成动态接入部分的TC流
 
         Returns:
             int: 返回生成TC的数量
         """
         # 生成动态调度部分的TC流，预留部分由contribution_rl生成
-
+        tc_nums = np.zeros[self.max_t]
         tc = np.random.poisson(lam=3, size=100)  # 产生泊松分布的TC流
         # rb = np.empty((self.C, self.subslot)) #生成C*subslot的二维空矩阵
         tc_num = 0  # 记录TC流数量
-        for i in range(len(tc)):
-            if tc[i] > 3:
-                tc_num += 1
-        return tc_num
+        for j in range(self.max_t):
+            for i in range(len(tc)):
+                if tc[i] > 3:
+                    tc_num += 1
+            tc_nums.append(tc_num)
+        return tc_nums
 
     def reserve_sensor(self, t: int) -> int:
         """预测性预留节点，并记录触发和抢占情况
@@ -183,13 +189,12 @@ class RTSN(object):
         _, s_ht = self.cal_5G_delay(t)
         q_duration = (self.t_tsn_max - self.t_tsn_min)/8  # 相邻队列之间的传输时间差
         q_delay = self.t_tsn_min + q_t * q_duration  # 第q_t个队列的时延函数
-        t_tsn = self.H * \
-            np.trunc(s_ht * self.D * q_delay /
+        t_tsn = self.H * np.trunc(s_ht * self.D * q_delay /
                      self.r_tsn_min/self.t_cyc) * self.t_cyc
 
         return t_tsn
 
-    def cal_d_q(self, q: int, t_5G: float) -> float:
+    def cal_d_q(self, t:int, q: int, t_5G: float) -> float:
         """计算不同TSN队列的传输时延
 
         Args:
@@ -200,13 +205,14 @@ class RTSN(object):
             float: 各TSN队列传输时延
         """
         q_duration = (self.t_tsn_max - self.t_tsn_min)/8  # 相邻队列之间的传输时间差
+        t_tsn = self.cal_tsn_delay(t, q)
         # q_duration = 3
         # d = self.t_tsn_min + q * q_duration - self.t_ddl + t_5G[1]
-        d = self.t_tsn_min + q * q_duration- self.t_ddl + t_5G
+        d = t_tsn - self.t_ddl + t_5G
 
         return d
 
-    def cal_q_t(self, t_5G: float) -> int:
+    def cal_q_t(self, t:int,  t_5G: float) -> int:
         """计算TSN队列级数
 
         Args:
@@ -216,10 +222,13 @@ class RTSN(object):
             int: 应该注入的TSN队列级数
         """
         # q_duration = (self.t_tsn_max - self.t_tsn_min)/8 #相邻队列之间的传输时间差
-        q_t = 0
-        while self.cal_d_q(q_t, t_5G) < 0.0:
+        q_t = 8
+        while self.cal_d_q(t, q_t, t_5G) > 0.0:
+            if q_t > 0:
             # while (self.t_tsn_min + q * q_duration - self.t_ddl + t_5G) < 0.0:
-            q_t += 1
+                q_t -= 1
+            else:
+                q_t = 0
         # q_t = np.argmin(self.t_tsn_min + q_t * q_duration - (self.t_ddl - t_5G))
         # if q_t < 9 & q_t >  0:
         #     return q_t
@@ -263,7 +272,7 @@ def get_data(runs:int, time:int, rtsn) -> list:
             t_5G = rtsn.cal_5G_delay(t)
             t_5Gs.append(t_5G[0])
 
-            q_t = rtsn.cal_q_t(t_5G[0])
+            q_t = rtsn.cal_q_t(t, t_5G[0])
             q_ts.append(q_t)
 
             t_tsn = rtsn.cal_tsn_delay(t, q_ts[t])
@@ -315,6 +324,11 @@ def test(runs:int, time:int):
 
 def travers_data(runs:int, time:int):
     rtsn = RTSN()
+    res = rtsn.cal_d_q(0, 5, 122.222222)
+    res = rtsn.cal_d_q(0, 5, 122.222222)
+    res = rtsn.cal_d_q(0, 5, 122.222222)
+    res = rtsn.cal_d_q(0, 5, 122.222222)
+    res = rtsn.cal_d_q(0, 5, 122.222222)
     r_rt = [i for i in range(rtsn.subslot+1)] #self.subslot = 15
     # q_t = [i for i in range(8)]
     for res in r_rt:
