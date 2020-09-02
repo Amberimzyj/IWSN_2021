@@ -18,7 +18,7 @@ from iwsn import contribution_rl
 class RTSN(object):
     def __init__(self,
                  data_path: str = 'data/X2_pro.npz',
-                 #TTI = 0,
+                 # TTI = 0,
                  C=4,
                  subslot=15,
                  t_rb=300,  # 8.888 < t_rb < 12.7777
@@ -231,20 +231,27 @@ class RTSN(object):
         Returns:
             int: 应该注入的TSN队列级数
         """
+
+        q_t = np.arange(0, 8)
+        t_tsn = self.cal_tsn_delay(t, q_t)
+        d = t_tsn - self.t_ddl + t_5G
+        d[d > 0] = d.min() - 1
+        return np.argmax(d)
+
         # q_duration = (self.t_tsn_max - self.t_tsn_min)/8 #相邻队列之间的传输时间差
-        q_t = 8
-        while self.cal_d_q(t, q_t, t_5G) > 0.0:
-            if q_t > 0:
-                # while (self.t_tsn_min + q * q_duration - self.t_ddl + t_5G) < 0.0:
-                q_t -= 1
-            else:
-                q_t = 0
-        # q_t = np.argmin(self.t_tsn_min + q_t * q_duration - (self.t_ddl - t_5G))
-        # if q_t < 9 & q_t >  0:
-        #     return q_t
-        # else:
-        #     return 8
-        return q_t
+        # q_t = 8
+        # while self.cal_d_q(t, q_t, t_5G) > 0.0:
+        #     if q_t > 0:
+        #         # while (self.t_tsn_min + q * q_duration - self.t_ddl + t_5G) < 0.0:
+        #         q_t -= 1
+        #     else:
+        #         q_t = 0
+        # # q_t = np.argmin(self.t_tsn_min + q_t * q_duration - (self.t_ddl - t_5G))
+        # # if q_t < 9 & q_t >  0:
+        # #     return q_t
+        # # else:
+        # #     return 8
+        # return q_t
 
 
 def save_file(res_num, t_5G, q_t, t_tsn, inte_delay, filepath):
@@ -281,16 +288,16 @@ def get_data(runs: int, time: int, rtsn) -> list:
     for r in trange(runs):
         # RTSN.reset()
         for t in range(time):
-            t_5G = rtsn.cal_5G_delay(t)
-            t_5Gs.append(t_5G[0])
+            t_5G = rtsn.cal_5G_delay(t)[0]
+            t_5Gs.append(t_5G)
 
-            q_t = rtsn.cal_q_t(t, t_5G[0])
+            q_t = rtsn.cal_q_t(t, t_5G)
             q_ts.append(q_t)
 
-            t_tsn = rtsn.cal_tsn_delay(t, q_ts[t])
+            t_tsn = rtsn.cal_tsn_delay(t, q_t)
             t_tsns.append(t_tsn)
 
-            inte_delay = t_5G[0] + t_tsns[t]
+            inte_delay = t_5G + t_tsn
             inte_delays.append(inte_delay)
 
             # t_5G.append(rtsn.cal_5G_delay(t))
@@ -338,15 +345,17 @@ def test(runs: int, time: int):
 
 def travers_data(runs: int, time: int):
     rtsn = RTSN()
-    # r_rt = [i for i in range(rtsn.subslot+1)]  # self.subslot = 15
-    # for res in r_rt:
-    #     rtsns = RTSN(res_subslot_num=res)
-    #     t_5Gs, t_tsns, q_ts, inte_delays = get_data(runs, time, rtsns)
-    #     save_file(res, t_5Gs, q_ts, t_tsns, inte_delays,
-    #               f'data/RTSN_res/RTSN_res_{res}.csv')
-    t_5Gs, t_tsns, q_ts, inte_delays = get_data(runs, time, rtsn)
-    save_file(res, t_5Gs, q_ts, t_tsns, inte_delays, 'data/RTSN_res/RTSN_res.csv')
-    
+    r_rt = [i for i in range(rtsn.subslot+1)]  # self.subslot = 15
+
+    t_tsns = np.zeros((len(r_rt), 8))
+    for res in r_rt:
+        rtsns = RTSN(res_subslot_num=res)
+        t_tsns[res] = rtsns.cal_tsn_delay(0, np.arange(0, 8))
+
+        # t_5Gs, t_tsns, q_ts, inte_delays = get_data(runs, time, rtsns)
+        # save_file(res, t_5Gs, q_ts, t_tsns, inte_delays,
+        #           f'data/RTSN_res/RTSN_res_{res}.csv')
+    pass
 
 
 if __name__ == '__main__':
