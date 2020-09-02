@@ -26,7 +26,7 @@ class RTSN(object):
                  signal_ratio=0.75,
                  t_tsn_max=40,
                  t_tsn_min=8,
-                 t_ddl=95,
+                 t_ddl=130,
                 #  q=8,
                  D=60,
                  H=5,
@@ -221,7 +221,10 @@ class RTSN(object):
             # while (self.t_tsn_min + q * q_duration - self.t_ddl + t_5G) < 0.0:
             q_t += 1
         # q_t = np.argmin(self.t_tsn_min + q_t * q_duration - (self.t_ddl - t_5G))
-
+        # if q_t < 9 & q_t >  0:
+        #     return q_t
+        # else:
+        #     return 8
         return q_t
 
 def save_file( res_num, t_5G, q_t, t_tsn, inte_delay, filepath):
@@ -317,7 +320,7 @@ def travers_data(runs:int, time:int):
     for res in r_rt:
         rtsns = RTSN(res_subslot_num=res)
         t_5Gs, t_tsns, q_ts, inte_delays = get_data(runs, time, rtsns)
-        save_file(res, t_5Gs, q_ts, t_tsns, inte_delays, f'data/RTSN_res_{res}.csv')
+        save_file(res, t_5Gs, q_ts, t_tsns, inte_delays, f'data/RTSN_res/RTSN_res_{res}.csv')
 
 
 

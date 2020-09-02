@@ -25,7 +25,7 @@ from iwsn.utils.patterns import singleton
 # from iwsn.utils.naive_bayes import NavieBayes
 
 
-@singleton
+# @singleton
 class SensorContrib(object):
     '''The sensor contribution class.'''
 
@@ -36,7 +36,7 @@ class SensorContrib(object):
                  trans_time_interal: int = 3,
                  #  feature_sensor_dis: float = 3.,
                  act_num=40,
-                 res_num=16,
+                 res_num=20,
                  bayes_type: str = 'MultinomialNB'
                  ):
         """The sensor conttibution class.
