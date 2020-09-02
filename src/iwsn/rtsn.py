@@ -23,7 +23,7 @@ class RTSN(object):
                  subslot=15,
                  t_rb=300, #8.888 < t_rb < 12.7777
                  res_subslot_num=4,
-                 signal_ratio=0.15,
+                 signal_ratio=0.75,
                  t_tsn_max=40,
                  t_tsn_min=8,
                  t_ddl=95,
@@ -109,11 +109,10 @@ class RTSN(object):
             int:  存放固定预留RB上预留且触发且被抢占的节点数量
         """
         X2_pro = self.gen_pro(3)
-        _, pre_sensor, trigger_sensor = self.con.cal_pre_accu(
-            t, X2_pro)  # 预测t时刻触发节点
+        _, pre_sensor, trigger_sensor = self.con.cal_pre_accu(t, X2_pro)  # 预测t时刻触发节点
         # print(pre_sensor)
         # print(trigger_sensor)
-        pre_sensor = np.array(pre_sensor)
+        pre_sensor = np.array(pre_sensor)[:self.res_rb_num]
         pre_sensor = pre_sensor.reshape(
             (self.C, self.res_subslot_num))  # 将预测节点存放至预留RB
         # print(pre_sensor)
@@ -225,8 +224,9 @@ class RTSN(object):
 
         return q_t
 
-def save_file(t_5G, q_t, t_tsn, inte_delay, filepath):
+def save_file( res_num, t_5G, q_t, t_tsn, inte_delay, filepath):
     dataframe = pd.DataFrame({
+            "res_num":res_num,
             "t_5G": t_5G,
             "q_t": q_t,
             "t_tsn": t_tsn,
@@ -304,19 +304,20 @@ def get_data(runs:int, time:int, rtsn) -> list:
 def test(runs:int, time:int):
     # r_subslot_num = range(16)
     # rtsns = [RTSN(res_subslot_num = res) for res in r_subslot_num]
+    rtsn = RTSN()
     t_5Gs, t_tsns, q_ts, inte_delays = get_data(runs, time, RTSN())
     # np.savetxt('data/t_5Gs.csv',t_5Gs,q_ts)
     # np.savetxt('data/t_5Gs.csv',t_5Gs)
-    save_file(t_5Gs, q_ts, t_tsns, inte_delays, 'data/RTSN.csv')
+    save_file(rtsn.res_subslot_num, t_5Gs, q_ts, t_tsns, inte_delays, 'data/RTSN.csv')
 
 def travers_data(runs:int, time:int):
-    # rtsn = rtsns()
-    r_rt = [i for i in range(15)] #self.subslot = 15
+    rtsn = RTSN()
+    r_rt = [i for i in range(rtsn.subslot+1)] #self.subslot = 15
     # q_t = [i for i in range(8)]
     for res in r_rt:
-        # rtsn_res = rtsn(res_subslot_num=res)
-        t_5Gs, t_tsns, q_ts, inte_delays = get_data(runs, time, RTSN(res_subslot_num=res))
-        save_file(t_5Gs, q_ts, t_tsns, inte_delays, f'data/RTSN_res_{res}.csv')
+        rtsns = RTSN(res_subslot_num=res)
+        t_5Gs, t_tsns, q_ts, inte_delays = get_data(runs, time, rtsns)
+        save_file(res, t_5Gs, q_ts, t_tsns, inte_delays, f'data/RTSN_res_{res}.csv')
 
 
 
