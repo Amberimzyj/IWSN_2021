@@ -22,7 +22,7 @@ class RTSN(object):
                  C=4,
                  subslot=15,
                  t_rb=300,  # 8.888 < t_rb < 12.7777
-                 res_subslot_num=4,
+                 res_subslot_num=12,
                  signal_ratio=0.75,
                  t_tsn_max=92,
                  t_tsn_min=8,
@@ -338,18 +338,15 @@ def test(runs: int, time: int):
 
 def travers_data(runs: int, time: int):
     rtsn = RTSN()
-    res = rtsn.cal_d_q(0, 5, 122.222222)
-    res = rtsn.cal_d_q(0, 5, 122.222222)
-    res = rtsn.cal_d_q(0, 5, 122.222222)
-    res = rtsn.cal_d_q(0, 5, 122.222222)
-    res = rtsn.cal_d_q(0, 5, 122.222222)
-    r_rt = [i for i in range(rtsn.subslot+1)]  # self.subslot = 15
-    # q_t = [i for i in range(8)]
-    for res in r_rt:
-        rtsns = RTSN(res_subslot_num=res)
-        t_5Gs, t_tsns, q_ts, inte_delays = get_data(runs, time, rtsns)
-        save_file(res, t_5Gs, q_ts, t_tsns, inte_delays,
-                  f'data/RTSN_res/RTSN_res_{res}.csv')
+    # r_rt = [i for i in range(rtsn.subslot+1)]  # self.subslot = 15
+    # for res in r_rt:
+    #     rtsns = RTSN(res_subslot_num=res)
+    #     t_5Gs, t_tsns, q_ts, inte_delays = get_data(runs, time, rtsns)
+    #     save_file(res, t_5Gs, q_ts, t_tsns, inte_delays,
+    #               f'data/RTSN_res/RTSN_res_{res}.csv')
+    t_5Gs, t_tsns, q_ts, inte_delays = get_data(runs, time, rtsn)
+    save_file(res, t_5Gs, q_ts, t_tsns, inte_delays, 'data/RTSN_res/RTSN_res.csv')
+    
 
 
 if __name__ == '__main__':
