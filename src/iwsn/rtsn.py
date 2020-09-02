@@ -28,7 +28,7 @@ class RTSN(object):
                  t_tsn_min=8,
                  t_ddl=95,
                 #  q=8,
-                 D=60,  
+                 D=60,
                  H=5,
                  r_tsn_min=4000,
                  t_cyc=1.75):
@@ -204,7 +204,7 @@ class RTSN(object):
         # q_duration = 3
         # d = self.t_tsn_min + q * q_duration - self.t_ddl + t_5G[1]
         d = self.t_tsn_min + q * q_duration- self.t_ddl + t_5G
-        
+
         return d
 
     def cal_q_t(self, t_5G: float) -> int:
@@ -226,7 +226,7 @@ class RTSN(object):
         return q_t
 
 def save_file(t_5G, q_t, t_tsn, inte_delay, filepath):
-    dataframe = pd.DataFrame({  
+    dataframe = pd.DataFrame({
             "t_5G": t_5G,
             "q_t": q_t,
             "t_tsn": t_tsn,
@@ -234,7 +234,7 @@ def save_file(t_5G, q_t, t_tsn, inte_delay, filepath):
         })
     dataframe.to_csv(filepath)
 
-def get_data(runs:int, time:int, rtsns) -> list:
+def get_data(runs:int, time:int, rtsn) -> list:
     """运行RTSN函数得到相应参数并存入列表
 
     Args:
@@ -245,7 +245,7 @@ def get_data(runs:int, time:int, rtsns) -> list:
     Returns:
         list, list, list, list: 5G时延, TSN时延, TSN队列优先级, 总时延
     """
-    rtsn = rtsns()
+    # rtsn = rtsns()
     # delays = np.zeros((len(rtsns), runs, time))
     # t_5G_sum = np.zeros((len(rtsns), runs, time))
     t_5Gs = [] #存放5G时延
@@ -261,7 +261,7 @@ def get_data(runs:int, time:int, rtsns) -> list:
             t_5Gs.append(t_5G[0])
 
             q_t = rtsn.cal_q_t(t_5G[0])
-            q_ts.append(q_t) 
+            q_ts.append(q_t)
 
             t_tsn = rtsn.cal_tsn_delay(t, q_ts[t])
             t_tsns.append(t_tsn)
@@ -288,14 +288,14 @@ def get_data(runs:int, time:int, rtsns) -> list:
 #                 t_5Gs.append(t_5G[0])
 
 #                 q_t = rtsn.cal_q_t(t_5G[0])
-#                 q_ts.append(q_t) 
+#                 q_ts.append(q_t)
 
 #                 t_tsn = rtsn.cal_tsn_delay(t, q_ts[t])
 #                 t_tsns.append(t_tsn)
 
 #                 inte_delay = t_5G[0] + t_tsns[t]
 #                 inte_delays.append(inte_delay)
-                
+
 #     mean_best_action_counts = best_action_counts.mean(axis=1)
 #     mean_rewards = rewards.mean(axis=1)
 #     return mean_best_action_counts, mean_rewards
@@ -304,7 +304,7 @@ def get_data(runs:int, time:int, rtsns) -> list:
 def test(runs:int, time:int):
     # r_subslot_num = range(16)
     # rtsns = [RTSN(res_subslot_num = res) for res in r_subslot_num]
-    t_5Gs, t_tsns, q_ts, inte_delays = get_data(runs, time, RTSN)
+    t_5Gs, t_tsns, q_ts, inte_delays = get_data(runs, time, RTSN())
     # np.savetxt('data/t_5Gs.csv',t_5Gs,q_ts)
     # np.savetxt('data/t_5Gs.csv',t_5Gs)
     save_file(t_5Gs, q_ts, t_tsns, inte_delays, 'data/RTSN.csv')
