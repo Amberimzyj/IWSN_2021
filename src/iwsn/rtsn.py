@@ -21,7 +21,7 @@ class RTSN(object):
                  # TTI = 0,
                  C=4,
                  subslot=15,
-                 t_rb=300,  # 8.888 < t_rb < 12.7777
+                 t_rb=450,  # 8.888 < t_rb < 12.7777
                  res_subslot_num=12,
                  signal_ratio=0.75,
                  t_tsn_max=120,
@@ -98,7 +98,7 @@ class RTSN(object):
         if not hasattr(self, 'tc'):
             self.tc = np.random.poisson(lam=3, size=(self.max_t, 100))
 
-        _, _ , trigger_num, _ = self.reserve_sensor(t)
+        _, _, trigger_num, _ = self.reserve_sensor(t)
 
         return (self.tc[t] > 3).sum() - trigger_num
 
@@ -129,7 +129,7 @@ class RTSN(object):
             if pre_sensor[1][i] in trigger_sensor:
                 fix_trigger_num += 1
                 trigger_index.append(i)
-        trigger_num = 0 #存放预留区域预测成功的节点数量
+        trigger_num = 0  # 存放预留区域预测成功的节点数量
         for i in range(self.C):
             for j in range(self.res_subslot_num):
                 if pre_sensor[i][j] in trigger_sensor:
@@ -353,13 +353,18 @@ def test(runs: int, time: int):
 def travers_data(runs: int, time: int):
     rtsn = RTSN()
     r_rt = [i for i in range(rtsn.subslot+1)]  # self.subslot = 15
+    all_t_tsns = np.zeros((len(r_rt), 8))
+
     for res in r_rt:
         rtsns = RTSN(res_subslot_num=res)
+        all_t_tsns[res] = rtsns.cal_tsn_delay(0, np.arange(0, 8))
+        t_5g = rtsns.cal_5G_delay(0)[0]
+        all_t_tsns[res] += t_5g
+
         t_5Gs, t_tsns, q_ts, inte_delays = get_data(runs, time, rtsns)
         save_file(res, t_5Gs, q_ts, t_tsns, inte_delays,
                   f'data/RTSN_res/RTSN_res_{res}.csv')
-
-    
+    print(all_t_tsns)
 
 
 if __name__ == '__main__':
