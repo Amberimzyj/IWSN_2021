@@ -14,8 +14,18 @@ from iwsn.rtsn import RTSN
 
 class RL:
 
-    def __init__(self, k_arm=10, epsilon=0., initial=0., step_size=0.1, sample_averages=False, UCB_param=None,
-                 gradient=False, gradient_baseline=False, true_reward=0.):
+    def __init__(self, data_path: str = 'data/RTSN.csv',
+                 k_arm=10, 
+                 epsilon=0., 
+                 initial=0., 
+                 step_size=0.1, 
+                 sample_averages=False, 
+                 UCB_param=None,
+                 gradient=False, 
+                 gradient_baseline=False, 
+                #  true_reward=0.
+                 ):
+        self._data = data_path
         self.k = k_arm
         self.step_size = step_size
         self.sample_averages = sample_averages
@@ -25,21 +35,27 @@ class RL:
         self.gradient = gradient
         self.gradient_baseline = gradient_baseline
         self.average_reward = 0
-        self.true_reward = true_reward
+        # self.inte_delay_true_reward = self._data['inte_delay']
         self.epsilon = epsilon
         self.initial = initial
 
+        if not os.path.exists(data_path):
+            raise FileNotFoundError(f'data path "{data_path}" not exists.')
+
+        self.RTSN_data = np.loadtxt(data_path)  # 读取RTSN相关信息
+
     def reset(self):
         # real reward for each action
-        self.q_true = np.random.randn(self.k) + self.true_reward
+
+        self.inte_delay_true = np.random.randn(self.k) + self._data['inte_delay']
 
         # estimation for each action
-        self.q_estimation = np.zeros(self.k) + self.initial
+        self.inte_delay_estimation = np.zeros(self.k) + self.initial
 
         # # of chosen times for each action
         self.action_count = np.zeros(self.k)
 
-        self.best_action = np.argmax(self.q_true)
+        self.best_action = np.argmax(self.inte_delay_true)
 
         self.time = 0
 
@@ -90,6 +106,54 @@ class RL:
                 (reward - self.q_estimation[action])
         return reward
 
+    def simulate(runs, time, bandits):
+        rewards = np.zeros((len(bandits), runs, time))
+        best_action_counts = np.zeros(rewards.shape)
+        for i, bandit in enumerate(bandits):
+            for r in trange(runs):
+                bandit.reset()
+                for t in range(time):
+                    action = bandit.act() 
+                    reward = bandit.step(action)
+                    rewards[i, r, t] = reward
+                    if action == bandit.best_action:
+                        best_action_counts[i, r, t] = 1
+        mean_best_action_counts = best_action_counts.mean(axis=1)
+        mean_rewards = rewards.mean(axis=1)
+        return mean_best_action_counts, mean_rewards
+
+    @ indexedproperty
+    def t_5G(self, key: float) -> float:
+        return self._data.at[key, 't_5G']
+
+    @ trans_slot.setter
+    def t_5G(self, key: int, value: float):
+        self._data.at[key, 't_5G'] = value
+    
+    @ indexedproperty
+    def q_t(self, key: float) -> float:
+        return self._data.at[key, 'q_t']
+
+    @ trans_slot.setter
+    def q_t(self, key: int, value: float):
+        self._data.at[key, 'q_t'] = value
+
+    @ indexedproperty
+    def t_tsn(self, key: float) -> float:
+        return self._data.at[key, 't_tsn']
+
+    @ trans_slot.setter
+    def t_tsn(self, key: int, value: float):
+        self._data.at[key, 't_tsn'] = value
+
+    @ indexedproperty
+    def inte_delay(self, key: float) -> float:
+        return self._data.at[key, 'inte_delay']
+
+    @ trans_slot.setter
+    def inte_delay(self, key: int, value: float):
+        self._data.at[key, 'inte_delay'] = value
+    
 
 if __name__ == '__main__':
     q = np.arange(0, 7)
