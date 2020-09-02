@@ -7,7 +7,11 @@
 # -----
 # Copyright 2020 - <<2020>> <<Yajing Zhang>>, <<IWIN>>
 
+import os
+
 import numpy as np
+from indexedproperty import indexedproperty
+from tqdm import trange
 
 from iwsn.rtsn import RTSN
 
@@ -15,15 +19,15 @@ from iwsn.rtsn import RTSN
 class RL:
 
     def __init__(self, data_path: str = 'data/RTSN.csv',
-                 k_arm=10, 
-                 epsilon=0., 
-                 initial=0., 
-                 step_size=0.1, 
-                 sample_averages=False, 
+                 k_arm=10,
+                 epsilon=0.,
+                 initial=0.,
+                 step_size=0.1,
+                 sample_averages=False,
                  UCB_param=None,
-                 gradient=False, 
-                 gradient_baseline=False, 
-                #  true_reward=0.
+                 gradient=False,
+                 gradient_baseline=False,
+                 #  true_reward=0.
                  ):
         self._data = data_path
         self.k = k_arm
@@ -47,7 +51,8 @@ class RL:
     def reset(self):
         # real reward for each action
 
-        self.inte_delay_true = np.random.randn(self.k) + self._data['inte_delay']
+        self.inte_delay_true = np.random.randn(
+            self.k) + self._data['inte_delay']
 
         # estimation for each action
         self.inte_delay_estimation = np.zeros(self.k) + self.initial
@@ -113,7 +118,7 @@ class RL:
             for r in trange(runs):
                 bandit.reset()
                 for t in range(time):
-                    action = bandit.act() 
+                    action = bandit.act()
                     reward = bandit.step(action)
                     rewards[i, r, t] = reward
                     if action == bandit.best_action:
@@ -122,42 +127,41 @@ class RL:
         mean_rewards = rewards.mean(axis=1)
         return mean_best_action_counts, mean_rewards
 
-    @ indexedproperty
+    @indexedproperty
     def t_5G(self, key: float) -> float:
         return self._data.at[key, 't_5G']
 
-    @ trans_slot.setter
+    @t_5G.setter
     def t_5G(self, key: int, value: float):
         self._data.at[key, 't_5G'] = value
-    
-    @ indexedproperty
+
+    @indexedproperty
     def q_t(self, key: float) -> float:
         return self._data.at[key, 'q_t']
 
-    @ trans_slot.setter
+    @q_t.setter
     def q_t(self, key: int, value: float):
         self._data.at[key, 'q_t'] = value
 
-    @ indexedproperty
+    @indexedproperty
     def t_tsn(self, key: float) -> float:
         return self._data.at[key, 't_tsn']
 
-    @ trans_slot.setter
+    @t_tsn.setter
     def t_tsn(self, key: int, value: float):
         self._data.at[key, 't_tsn'] = value
 
-    @ indexedproperty
+    @indexedproperty
     def inte_delay(self, key: float) -> float:
         return self._data.at[key, 'inte_delay']
 
-    @ trans_slot.setter
+    @inte_delay.setter
     def inte_delay(self, key: int, value: float):
         self._data.at[key, 'inte_delay'] = value
-    
+
 
 if __name__ == '__main__':
     q = np.arange(0, 7)
     rb = np.arange(0, 15)
-    
 
     rl = RL()

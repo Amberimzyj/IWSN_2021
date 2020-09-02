@@ -272,7 +272,8 @@ class SensorContrib(object):
         """
 
         act_times = np.zeros((self._length), 'int64')  # 记录每个节点在历次循环中触发的次数
-        joint_times = np.zeros((self._length, self._length), 'int64')  # 记录两个节点共同触发的次数
+        joint_times = np.zeros(
+            (self._length, self._length), 'int64')  # 记录两个节点共同触发的次数
 
         # 记录各种触发次数
         for i in tqdm(range(cir_num)):
@@ -471,12 +472,10 @@ class SensorContrib(object):
         plt.legend(loc=0, ncol=1)
         plt.show()
 
-
-        np.savetxt('cond_pre_accu',cond_ave_accs)
-        np.savetxt('MI_pre_accu',MI_ave_accs)
-        np.savetxt('X2_pre_accu',X2_ave_accs)
-        np.savez_compressed('data/X2_pro.npz', arr = X2_pro)
-        
+        np.savetxt('cond_pre_accu', cond_ave_accs)
+        np.savetxt('MI_pre_accu', MI_ave_accs)
+        np.savetxt('X2_pre_accu', X2_ave_accs)
+        np.savez_compressed('data/X2_pro.npz', arr=X2_pro)
 
     @ indexedproperty
     def trans_slot(self, key: float) -> float:
