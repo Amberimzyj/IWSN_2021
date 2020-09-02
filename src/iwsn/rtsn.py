@@ -310,12 +310,12 @@ def test(runs:int, time:int):
     save_file(t_5Gs, q_ts, t_tsns, inte_delays, 'data/RTSN.csv')
 
 def travers_data(runs:int, time:int):
-    rtsn = RTSN()
-    r_rt = [i for i in range(rtsn.subslot)]
+    # rtsn = rtsns()
+    r_rt = [i for i in range(15)] #self.subslot = 15
     # q_t = [i for i in range(8)]
     for res in r_rt:
-        rtsns = RTSN(res_subslot_num=res)
-        t_5Gs, t_tsns, q_ts, inte_delays = get_data(runs, time, rtsns)
+        # rtsn_res = rtsn(res_subslot_num=res)
+        t_5Gs, t_tsns, q_ts, inte_delays = get_data(runs, time, RTSN(res_subslot_num=res))
         save_file(t_5Gs, q_ts, t_tsns, inte_delays, f'data/RTSN_res_{res}.csv')
 
 
@@ -323,5 +323,7 @@ def travers_data(runs:int, time:int):
 
 if __name__ == '__main__':
     travers_data(runs=3, time = 10)
+
+    # test(3,10)
 
     print('=> Generate done.')
