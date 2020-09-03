@@ -14,4 +14,5 @@ __pycache__/
 *.csv
 *_pre_accu
 /src/pre_accu
+/src/iwsn/data
 .DS_Store
