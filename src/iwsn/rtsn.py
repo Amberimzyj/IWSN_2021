@@ -26,7 +26,7 @@ class RTSN(object):
                  signal_ratio=0.75,
                  t_tsn_max=120,
                  t_tsn_min=8,
-                 t_ddl=300,
+                 t_ddl=250,
                  #  q_duration = 4,
                  #  q=8,
                  D=60,
@@ -98,9 +98,10 @@ class RTSN(object):
         if not hasattr(self, 'tc'):
             self.tc = np.random.poisson(lam=3, size=(self.max_t, 100))
 
-        _, _ , trigger_num, _ = self.reserve_sensor(t)
+        # _, _ , trigger_num, _ = self.reserve_sensor(t)
 
-        return (self.tc[t] > 3).sum() - trigger_num
+        # return (self.tc[t] > 3).sum() - trigger_num
+        return (self.tc[t] > 3).sum()
 
     def reserve_sensor(self, t: int) -> int:
         """预测性预留节点，并记录触发和抢占情况
@@ -114,7 +115,7 @@ class RTSN(object):
             int:  存放固定预留RB上预留且触发且被抢占的节点数量
         """
         X2_pro = self.gen_pro(3)
-        _, pre_sensor, trigger_sensor = self.con.cal_pre_accu(
+        _, pre_sensor, _, trigger_sensor = self.con.cal_pre_accu(
             t, X2_pro)  # 预测t时刻触发节点
         # print(pre_sensor)
         # print(trigger_sensor)
@@ -180,16 +181,19 @@ class RTSN(object):
         """
 
         tc_num = self.data_gen_dynamic_tc(t)
-        fix_trigger_num, _, _, trigger_preempt_num = self.reserve_sensor(t)
+        fix_trigger_num, _, trigger_num, trigger_preempt_num = self.reserve_sensor(t)
+        dynamic_tc_num = tc_num - trigger_num #求出动态接入部分的TC流数量
         ns_num, _, preempt_num = self.data_gen_ns(t)
         s_ht = (1 - 1/self.C) * self.res_rb_num + \
-            tc_num + ns_num - trigger_preempt_num
+            dynamic_tc_num + ns_num - trigger_preempt_num
         # dict = {'self.res_rb_num:': self.res_rb_num, 'tc_num:': tc_num, 'ns_num:': ns_num, 'self.res_subslot_num:': self.res_subslot_num,
         #         'preempt_num:': preempt_num, 'trigger_preempt_num:': trigger_preempt_num, 'self.signal_ratio:': self.signal_ratio, 's_ht:': s_ht, 'self.t_rb:': self.t_rb}
         # print(dict)
         # S_ht = self.res_num - np.trunc(self.res_subslot_num - (fix_trigger_num + preempt_num - trigger_preempt_num))
-        t_5G = np.trunc((self.res_rb_num + (tc_num + ns_num - (self.res_subslot_num - (
-            preempt_num - trigger_preempt_num)))*(1 + self.signal_ratio))/(self.C * 1))*self.t_rb/s_ht
+        # t_5G = np.trunc((self.res_rb_num + (dynamic_tc_num + ns_num - (self.res_subslot_num - (
+        #     preempt_num - trigger_preempt_num)))*(1 + self.signal_ratio))/(self.C * 1))*self.t_rb/s_ht
+        t_5G = np.trunc((self.res_rb_num + (dynamic_tc_num + ns_num - (
+            preempt_num - trigger_preempt_num))*(1 + self.signal_ratio))/(self.C * 1))*self.t_rb
 
         return t_5G, s_ht
 
@@ -354,7 +358,7 @@ def travers_data(runs: int, time: int):
     rtsn = RTSN()
     r_rt = [i for i in range(rtsn.subslot+1)]  # self.subslot = 15
     for res in r_rt:
-        rtsns = RTSN(res_subslot_num=res)
+        rtsns = RTSN(res_subslot_num=15)
         t_5Gs, t_tsns, q_ts, inte_delays = get_data(runs, time, rtsns)
         save_file(res, t_5Gs, q_ts, t_tsns, inte_delays,
                   f'data/RTSN_res/RTSN_res_{res}.csv')

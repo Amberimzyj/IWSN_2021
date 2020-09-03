@@ -176,7 +176,7 @@ class SensorContrib(object):
         res_sensor = np.intersect1d(sort_sensor, activated_t2)  # 预留的触发节点集
         pre_accu = len(res_sensor)/self._act_num
 
-        return pre_accu, sort_sensor, res_sensor
+        return pre_accu, sort_sensor, res_sensor,activated_t2
         # return pre_accu, sel_sensor,sort_sensor,activated_t1, activated_t2
 
     def cal_ave_pre_accu(self, t1: int, t2: int, probability: np.ndarray) -> float:
