@@ -4,10 +4,6 @@ from functools import cmp_to_key
 
 import numpy as np
 from matplotlib import pyplot as plt
-from mpl_toolkits.axes_grid1.inset_locator import mark_inset
-from mpl_toolkits.axes_grid1.inset_locator import inset_axes
-
-
 
 
 def legend_sort(x, y):
@@ -24,14 +20,17 @@ def legend_sort(x, y):
     else:
         return x_n_order - y_n_order
 
+
+metirc_order = {'X2': 1, 'MI': 2, 'Cond': 3, 'Select': 4}
+
+
 def save_figure1():
-    #royalblue darkorange tomato forestgreen
+    # royalblue darkorange tomato forestgreen
     style_dict = {'3000': '.--', '4500': 'o-', '6000': '^--'}
     metric_dict = {'cond_pre_accu': 'Cond ', 'MI_pre_accu': 'MI',
-                'X2_pre_accu': 'X2 ', 'select_pre_accu': 'Select'}
-    metirc_order = {'X2': 1, 'MI': 2, 'Cond': 3, 'Select': 4}
+                   'X2_pre_accu': 'X2 ', 'select_pre_accu': 'Select'}
     color_dict = {'cond_pre_accu': 'r', 'MI_pre_accu': 'forestgreen',
-                'X2_pre_accu': 'royalblue', 'select_pre_accu': 'orange'}
+                  'X2_pre_accu': 'royalblue', 'select_pre_accu': 'orange'}
 
     plt.rcParams["legend.facecolor"] = 'whitesmoke'  # 设置图例背景色
     plt.rcParams["legend.edgecolor"] = '0.5'  # 设置图例边框深浅
@@ -52,16 +51,15 @@ def save_figure1():
             accu_name = csv_path.stem
             data = np.genfromtxt(csv_path, delimiter=',')
             line, = ax.plot(
-                data, color_dict[nodes], color=style_dict[accu_name], linewidth = 0.8)
-            axins.plot(data, color_dict[nodes], color=style_dict[accu_name])
+                data, style_dict[nodes], color=color_dict[accu_name], linewidth=0.8)
+            axins.plot(data, style_dict[nodes], color=color_dict[accu_name])
             line.set_label(f'{metric_dict[accu_name]}({nodes})')
 
     handles, labels = plt.gca().get_legend_handles_labels()
     handles, labels = zip(*sorted(zip(handles, labels),
                                   key=cmp_to_key(legend_sort)))
 
-    ax.indicate_inset_zoom(axins)
-    # mark_inset(ax, axins, loc1=3, loc2=1, fc="none", ec='k', lw=1)
+    ax.indicate_inset_zoom(axins, edgecolor='grey', alpha=0.8, linewidth=0.8)
     plt.xticks(np.arange(0, 25, 2))
     plt.yticks(np.arange(0, 1, 0.1))
     plt.grid(linestyle='-.')
@@ -73,12 +71,13 @@ def save_figure1():
 
     fig.savefig(data_path / 'ave_pre_accu.pdf', dpi=600, format='pdf')
 
+
 def save_figure2():
-    #royalblue darkorange tomato forestgreen
+    # royalblue darkorange tomato forestgreen
     style_dict = {'cond_pre_accu': 'r', 'MI_pre_accu': 'forestgreen',
-                'X2_pre_accu': 'royalblue', 'select_pre_accu': 'orange'}
+                  'X2_pre_accu': 'royalblue', 'select_pre_accu': 'orange'}
     metric_dict = {'cond_pre_accu': 'Cond ', 'MI_pre_accu': 'MI',
-                'X2_pre_accu': 'X2 ', 'select_pre_accu': 'Select'}
+                   'X2_pre_accu': 'X2 ', 'select_pre_accu': 'Select'}
     metirc_order = {'X2': 1, 'MI': 2, 'Cond': 3, 'Select': 4}
     color_dict = {'3000': '.--', '4500': 'o-', '6000': '^--'}
 
@@ -97,13 +96,13 @@ def save_figure2():
     data_path = Path("data/pre_accu")
 
     all_data = np.loadtxt('data/RTSN.csv')
-    res = all_data[:,0]
-    t_5G = all_data[:,1]
-    q_t = all_data[:,2]
-    t_tsn = all_data[:,3]
-    inte_delay = all_data[:,4]
+    res = all_data[:, 0]
+    t_5G = all_data[:, 1]
+    q_t = all_data[:, 2]
+    t_tsn = all_data[:, 3]
+    inte_delay = all_data[:, 4]
 
-    plt.plot(res,t_5G)
+    plt.plot(res, t_5G)
 
     # #处理图例
     # handles, labels = plt.gca().get_legend_handles_labels()
@@ -125,4 +124,4 @@ def save_figure2():
 
 
 if __name__ == '__main__':
-    save_figure2()
+    save_figure1()
