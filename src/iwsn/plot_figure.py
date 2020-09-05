@@ -87,10 +87,10 @@ def save_figure2():
 
     #局部放大
     fig, ax = plt.subplots(figsize=(10, 5))
-    axins = ax.inset_axes((0.1, 0.45, 0.4, 0.4))
-    axins.set_xlim(6, 8)
+    axins = ax.inset_axes((0.1, 0.45, 0.3, 0.4))
+    axins.set_xlim(6, 8.5)
     axins.set_ylim(90, 140)
-    axins.set_xticks(np.arange(6, 8, 0.5))
+    axins.set_xticks(np.arange(6, 8.5, 0.5))
     axins.set_yticks(np.arange(90, 140, 10))
     axins.grid(linestyle='-.')
 
