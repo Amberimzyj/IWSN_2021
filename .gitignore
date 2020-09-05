@@ -2,7 +2,7 @@
 *.pyc
 __pycache__/
 *.egg-info/
-/ipynb/
+.ipynb_checkpoints/
 /src/jupyter/
 /data/
 /docs/
