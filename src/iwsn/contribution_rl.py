@@ -147,7 +147,7 @@ class SensorContrib(object):
 
         # cond_pro = np.random.rand(self._length,self._length)
         # act_times, joint_times, pri_pro, cond_pro = sensor_contirb.circul(cir_num)
-        activated_t1 = self.t_activate(t)  # 前一时刻触发的节点list
+        activated_t1, tc_num1 = self.t_activate(t)  # 前一时刻触发的节点list
         # sel_sensor = np.zeros((self._length,self._length))
         # sort_sensor = np.zeros((self._length,self._length))
         # for i in range(self._sensor_npt):
@@ -167,23 +167,23 @@ class SensorContrib(object):
         sort_sensor = np.argsort(sel_sensor)[::-1]  # 从大到小排序条件概率p(x|i)对应的x
         # sort_sensor = np.flip(np.argsort(sel_sensor),axis=0)#从大到小排序条件概率p(x|i)对应的x
         # 每一行（y）取概率最大的前res_num个x————预测节点集
-        sort_sensor = sort_sensor[0: self.res_num]
+        sort_sensor = sort_sensor[0: tc_num1]
         # unique, counts = np.unique(sort_sensor, return_counts=True)
         # sort_sensor = unique[np.argsort(counts)[::-1]] #从大到小排序index
         # sort_sensor = np.argsort(sort_sensor)[::-1] #从大到小排序index
         # sort_sensor = sort_sensor[:self._act_num] #显示act_num个index
-        activated_t2 = self.t_activate(t+1)  # 后一时刻触发的节点list
+        activated_t2, tc_num2 = self.t_activate(t+1)  # 后一时刻触发的节点list
         res_sensor = np.intersect1d(sort_sensor, activated_t2)  # 预留的触发节点集
-        pre_accu = len(res_sensor)/self._act_num
+        pre_accu = len(res_sensor)/tc_num2
 
-        return pre_accu, sort_sensor, res_sensor,activated_t2
+        return pre_accu, sort_sensor, res_sensor,activated_t2, tc_num2
         # return pre_accu, sel_sensor,sort_sensor,activated_t1, activated_t2
 
     def cal_ave_pre_accu(self, t1: int, t2: int, probability: np.ndarray) -> float:
 
         pre_accu = 0
         for i in range(t1, t2):
-            accu, _, _ = self.cal_pre_accu(i, probability)
+            accu, _, _ , _, _= self.cal_pre_accu(i, probability)
             pre_accu += accu
         ave_pre_accu = pre_accu/(t2-t1)
 
@@ -201,12 +201,14 @@ class SensorContrib(object):
         """
 
         activated = []
+        act_num = 0
         # active_th = np.linspace(0.5,1,sensor_num,endpoint=False) #设置传感器触发概率随着sensor index递减
-        for i in range(self._sensor_npt * t, (self._sensor_npt * t + self._act_num)):
+        for i in range(self._sensor_npt * t, self._sensor_npt *t + self._act_num ):
             if self.trans_prob[i] >= 0.2:
                 activated.append(i)
+                act_num += 1
 
-        return activated
+        return activated, act_num
 
     # def require_distance(self, distance: int) -> bool:
     #     """判断两个节点间的距离是否小于阈值
@@ -276,11 +278,11 @@ class SensorContrib(object):
             (self._length, self._length), 'int64')  # 记录两个节点共同触发的次数
 
         # 记录各种触发次数
-        for i in tqdm(range(cir_num)):
+        for i in range(cir_num):
             for t in tqdm(range(self._n_timeslots)):
-                activated_t1 = self.t_activate(t)  # t时刻触发的节点
+                activated_t1,_ = self.t_activate(t)  # t时刻触发的节点
                 if t < (self._n_timeslots - 1):
-                    activated_t2 = self.t_activate(t+1)  # t+1时刻触发的节点
+                    activated_t2, _ = self.t_activate(t+1)  # t+1时刻触发的节点
                     joint_times[np.ix_(activated_t1, activated_t2)] += 1
                 act_times[activated_t1] += 1
             self._data["transmission probability"] = np.random.uniform(

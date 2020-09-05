@@ -101,6 +101,11 @@ class SensorGen(object):
 
     def _gen_trans_prob(self) -> List[float]:
         trans_probs = [random.uniform(0, 1) for i in range(self._length)]
+        # trans_probs = []
+        # serial = math.ceil(self._length/self._sensornum)  # 得到timeslot个数
+        # for i in range(serial):
+        #     trans_prob = np.random.poisson(lam=3, size=self._sensornum)
+        #     trans_probs.extend(trans_prob)
 
         return trans_probs
 
