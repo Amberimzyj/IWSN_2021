@@ -30,7 +30,7 @@ class SensorContrib(object):
     '''The sensor contribution class.'''
 
     def __init__(self,
-                 data_path: str = 'data/6000.csv',
+                 data_path: str = 'data/pre_accu/1500.csv',
                  # active_thresh: float = 0.2,
                  sensor_num_pre_t: int = 60,
                  trans_time_interal: int = 3,
@@ -61,6 +61,7 @@ class SensorContrib(object):
         self._length = len(self._data)
         self._act_num = act_num
         self.res_num = res_num
+        self.iteration_time = 25
         # self._naive_bayes = NavieBayes(bayes_type)
 
     # def static_stage(self, max_sensors: int = 10):
@@ -131,6 +132,13 @@ class SensorContrib(object):
     #         accs[i-1] = acc
 
     #     return accs
+
+    def algo_select(self, cond_ave_pre:np.ndarray, MI_ave_pre:np.ndarray, X2_ave_pre: np.ndarray ):
+        select_ave_pre = []
+        for i in range(self.iteration_time):
+            select_ave_pre.append(np.max([cond_ave_pre[i], MI_ave_pre[i], X2_ave_pre[i]]))
+        return select_ave_pre
+
 
     def cal_pre_accu(self, t: int, probability: np.ndarray) -> float:
         """计算预测精度
@@ -461,12 +469,14 @@ class SensorContrib(object):
                 act_times, joint_times, i)
             MI_pro = self.cal_MI(act_times, joint_times, i)
             X2_pro = self.cal_X2(act_times, joint_times, i)
-            cond_ave_accs.append(self.cal_ave_pre_accu(0, 9, cond_pro))
-            MI_ave_accs.append(self.cal_ave_pre_accu(0, 9, MI_pro))
-            X2_ave_accs.append(self.cal_ave_pre_accu(0, 9, X2_pro))
+            cond_ave_accs.append(self.cal_ave_pre_accu(0, (self.iteration_time-1), cond_pro))
+            MI_ave_accs.append(self.cal_ave_pre_accu(0, (self.iteration_time-1), MI_pro))
+            X2_ave_accs.append(self.cal_ave_pre_accu(0, (self.iteration_time-1), X2_pro))
+        select_ave_pre = self.algo_select(cond_ave_accs, MI_ave_accs, X2_ave_accs)
         plt.plot(np.arange(1, cir_num), cond_ave_accs, 'b', label='CP')
         plt.plot(np.arange(1, cir_num), MI_ave_accs, 'g', label='MI')
         plt.plot(np.arange(1, cir_num), X2_ave_accs, 'r', label='X2')
+        plt.plot(np.arange(1, cir_num), select_ave_pre, 'deeppink', label='Select')
         plt.xlabel('Circulation Times')
         plt.ylabel('Prediction Accuracy')
         plt.xticks(np.arange(0, cir_num, (cir_num-1)/10))
@@ -474,10 +484,14 @@ class SensorContrib(object):
         plt.legend(loc=0, ncol=1)
         plt.show()
 
-        np.savetxt('cond_pre_accu', cond_ave_accs)
-        np.savetxt('MI_pre_accu', MI_ave_accs)
-        np.savetxt('X2_pre_accu', X2_ave_accs)
+        
+        np.savetxt('data/pre_accu/cond_pre_accu.csv', cond_ave_accs)
+        np.savetxt('data/pre_accu/MI_pre_accu.csv', MI_ave_accs)
+        np.savetxt('data/pre_accu/X2_pre_accu.csv', X2_ave_accs)
+        np.savetxt('data/pre_accu/select_pre_accu.csv', select_ave_pre)
         np.savez_compressed('data/X2_pro.npz', arr=X2_pro)
+
+        # return cond_ave_accs, MI_ave_accs, X2_ave_accs
 
     @ indexedproperty
     def trans_slot(self, key: float) -> float:
@@ -542,7 +556,7 @@ if __name__ == '__main__':
     act_times = np.zeros((sensor_contrib._length), 'int64')
     joint_times = np.zeros(
         (sensor_contrib._length, sensor_contrib._length), 'int64')
-    sensor_contrib.plot_pic(act_times, joint_times, 11)
+    sensor_contrib.plot_pic(act_times, joint_times, (sensor_contrib.iteration_time+1))
     # for i in range(1,501):
     #     act_times_temp, joint_times_temp = sensor_contrib.circul(1)
     #     act_times += act_times_temp
