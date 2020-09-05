@@ -30,7 +30,7 @@ class SensorContrib(object):
     '''The sensor contribution class.'''
 
     def __init__(self,
-                 data_path: str = 'data/pre_accu/6000.csv',
+                 data_path: str = 'data/pre_accu/1500.csv',
                  # active_thresh: float = 0.2,
                  sensor_num_pre_t: int = 60,
                  trans_time_interal: int = 3,

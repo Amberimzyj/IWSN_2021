@@ -23,7 +23,7 @@ class RTSN(object):
                  subslot=15,
                  t_rb=8,  # 8.888 < t_rb < 12.7777
                  res_subslot_num=12,
-                 signal_ratio=0.75,
+                 signal_ratio=0.95,
                  t_tsn_max=120,
                  t_tsn_min=8,
                  t_ddl=250,
