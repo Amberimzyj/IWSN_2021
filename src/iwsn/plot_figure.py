@@ -26,7 +26,7 @@ def legend_sort(x, y):
 
 def save_figure1():
     #royalblue darkorange tomato forestgreen
-    style_dict = {'3000': '.--', '4500': 'o-', '6000': '^--'}
+    style_dict = {'Data Size:3000': '.--', 'Data Size:4500': 'o-', 'Data Size:6000': '^--'}
     metric_dict = {'cond_pre_accu': 'Cond ', 'MI_pre_accu': 'MI',
                 'X2_pre_accu': 'X2 ', 'select_pre_accu': 'Select'}
     global metirc_order
@@ -38,7 +38,7 @@ def save_figure1():
     plt.rcParams["legend.edgecolor"] = '0.5'  # 设置图例边框深浅
 
     fig, ax = plt.subplots(figsize=(10, 5))
-    axins = ax.inset_axes((0.25, 0.2, 0.5, 0.4))
+    axins = ax.inset_axes((0.25, 0.2, 0.4, 0.3))
     axins.set_xlim(4, 8)
     axins.set_ylim(0.7, 0.85)
     axins.set_xticks(np.arange(4, 8, 1))
@@ -53,8 +53,8 @@ def save_figure1():
             accu_name = csv_path.stem
             data = np.genfromtxt(csv_path, delimiter=',')
             line, = ax.plot(
-                data, color_dict[nodes], color=style_dict[accu_name], linewidth = 0.8)
-            axins.plot(data, color_dict[nodes], color=style_dict[accu_name])
+                data, style_dict[nodes], color=color_dict[accu_name], linewidth = 0.8)
+            axins.plot(data, style_dict[nodes], color=color_dict[accu_name])
             line.set_label(f'{metric_dict[accu_name]}({nodes})')
 
     handles, labels = plt.gca().get_legend_handles_labels()
@@ -72,12 +72,12 @@ def save_figure1():
     plt.ylabel('Average Successful Prediction Ratio')
     plt.show()
 
-    fig.savefig(data_path / 'ave_pre_accu.pdf', dpi=600, format='pdf')
+    # fig.savefig(data_path / 'ave_pre_accu.pdf', dpi=600, format='pdf')
 
 def save_figure2():
     #royalblue darkorange tomato forestgreen
     style_dict = {'RTSN_3000': '.--', 'RTSN_4500': 'o-', 'RTSN_6000': '^--'}
-    metric_dict = {'RTSN_3000': '3000 ', 'RTSN_4500': '4500', 'RTSN_6000': '6000 '}
+    metric_dict = {'RTSN_3000': 'Data Size:3000 ', 'RTSN_4500': 'Data Size:4500', 'RTSN_6000': 'Data Size:6000 '}
     # metirc_order = {'X2': 1, 'MI': 2, 'Cond': 3, 'Select': 4}
     color_dict = {'RTSN_3000': 'forestgreen',
                 'RTSN_4500': 'royalblue', 'RTSN_6000': 'tomato'}
@@ -86,13 +86,23 @@ def save_figure2():
     plt.rcParams["legend.edgecolor"] = '0.5'  # 设置图例边框深浅
 
     #局部放大
-    fig, ax = plt.subplots(figsize=(10, 5))
-    axins = ax.inset_axes((0.1, 0.45, 0.3, 0.4))
-    axins.set_xlim(6, 8.5)
+    fig, ax= plt.subplots(figsize=(10, 5))
+    axins = ax.inset_axes((0.15, 0.4, 0.2, 0.5))
+    axins.set_xlim(6, 8)
     axins.set_ylim(90, 140)
-    axins.set_xticks(np.arange(6, 8.5, 0.5))
+    axins.set_xticks(np.arange(6, 8, 0.5))
     axins.set_yticks(np.arange(90, 140, 10))
     axins.grid(linestyle='-.')
+
+    
+
+    # axins1 = ax.inset_axes((0.6, 0.3, 0.3, 0.2))
+    # axins1.set_xlim(9, 11)
+    # axins1.set_ylim(180, 210)
+    # axins1.set_xticks(np.arange(9, 11, 0.5))
+    # axins1.set_yticks(np.arange(180, 210, 10))
+    # axins1.grid(linestyle='-.')
+
 
     data_path = Path("data/RTSN_data")
     for csv_path in data_path.glob('*.csv'):
@@ -106,16 +116,19 @@ def save_figure2():
         line,  = plt.plot(res, t_5G, style_dict[data_name], color=color_dict[data_name], linewidth = 0.8)
         line.set_label(f'{metric_dict[data_name]}')
         axins.plot(res, t_5G,  style_dict[data_name], color=color_dict[data_name])
+        # axins1.plot(res, t_5G,  style_dict[data_name], color=color_dict[data_name])
 
     # #处理图例
     handles, labels = plt.gca().get_legend_handles_labels()
 
     ax.indicate_inset_zoom(axins)
+    # ax.indicate_inset_zoom(axins1)
+
     # mark_inset(ax, axins, loc1=3, loc2=1, fc="none", ec='k', lw=1)
     plt.xticks(np.arange(0, 15, 2))
     # plt.yticks(np.arange(0, 1, 0.1))
     plt.grid(linestyle='-.')
-    plt.legend(bbox_to_anchor=(1, 0), handles=handles, labels=labels, loc='lower right')
+    plt.legend(bbox_to_anchor=(1, 0), handles=handles, labels=labels, loc='lower right', fontsize = 'large')
     plt.xlabel('Reserved RB numbers')
     plt.ylabel('Latency of 5G network')
     plt.show()
@@ -124,4 +137,4 @@ def save_figure2():
 
 
 if __name__ == '__main__':
-    save_figure2()
+    save_figure1()
