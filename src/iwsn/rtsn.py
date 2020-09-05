@@ -20,7 +20,7 @@ class RTSN(object):
                  data_path: str = 'data/X2_pro.npz',
                  # TTI = 0,
                  C=4,
-                 subslot=16,
+                 subslot=15,
                  t_rb=8,  # 8.888 < t_rb < 12.7777
                  res_subslot_num=12,
                  signal_ratio=0.75,
@@ -296,6 +296,7 @@ def save_file(res_num, t_5G, q_t, t_tsn, inte_delay, filepath):
     dataframe.to_csv(filepath)
 
 
+
 def get_data(runs: int, time: int, rtsn) -> list:
     """运行RTSN函数得到相应参数并存入列表
 
@@ -379,6 +380,8 @@ def travers_data(runs: int, time: int):
     rtsn = RTSN()
     r_rt = [i for i in range(rtsn.subslot+1)]  # self.subslot = 15
     all_t_tsns = np.zeros((len(r_rt), 8))
+    all_data = np.zeros((rtsn.subslot+1, 5)) #用来存放总数据
+
 
     for res in r_rt:
         rtsns = RTSN(res_subslot_num=res, max_t=time)
@@ -387,8 +390,20 @@ def travers_data(runs: int, time: int):
         all_t_tsns[res] += t_5g
 
         t_5Gs, t_tsns, q_ts, inte_delays = get_data(runs, time, rtsns)
+
+        all_data[res][0] = res
+        all_data[res][1] = np.mean(t_5Gs)
+        all_data[res][2] = np.argmax(np.bincount(q_ts))
+        all_data[res][3] = np.mean(t_tsns)
+        all_data[res][4] = np.mean(inte_delays)
+        
+                
         save_file(res, t_5Gs, q_ts, t_tsns, inte_delays,
                   f'data/RTSN_res/RTSN_res_{res}.csv')
+        
+    np.savetxt('data/RTSN.csv', all_data)
+
+
     # print(all_t_tsns)
 
 
