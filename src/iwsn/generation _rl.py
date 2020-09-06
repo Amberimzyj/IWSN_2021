@@ -26,10 +26,10 @@ class SensorGen(object):
     ''' The sensor generation class.'''
 
     def gen(self,
-            n=6000,
+            n=4500,
             ranges=[1, 6],
             sensor_list=[1, 2, 3, 4, 5],
-            save_path="6000.csv",
+            save_path="data/pre_accu/4500.csv",
             sensors_everyslot=60,  # 每个timeslot的sensor数量=钢板速度
             act_ratio=0.8
             ):  # 每个timeslot激活传感器数量的比例
@@ -101,6 +101,11 @@ class SensorGen(object):
 
     def _gen_trans_prob(self) -> List[float]:
         trans_probs = [random.uniform(0, 1) for i in range(self._length)]
+        # trans_probs = []
+        # serial = math.ceil(self._length/self._sensornum)  # 得到timeslot个数
+        # for i in range(serial):
+        #     trans_prob = np.random.poisson(lam=3, size=self._sensornum)
+        #     trans_probs.extend(trans_prob)
 
         return trans_probs
 

@@ -21,10 +21,10 @@ class RTSN(object):
                  # TTI = 0,
                  C=4,
                  subslot=15,
-                 t_rb=450,  # 8.888 < t_rb < 12.7777
+                 t_rb=8,  # 8.888 < t_rb < 12.7777
                  res_subslot_num=12,
-                 signal_ratio=0.75,
-                 t_tsn_max=120,
+                 signal_ratio=0.55,
+                 t_tsn_max=128,
                  t_tsn_min=8,
                  t_ddl=250,
                  #  q_duration = 4,
@@ -92,16 +92,18 @@ class RTSN(object):
             int: 返回生成TC的数量
         """
         # 生成动态调度部分的TC流，预留部分由contribution_rl生成
-        if t >= self.max_t:
-            raise Exception(f"t={t}大于max_t={self.max_t}")
+        # if t >= self.max_t:
+        #     raise Exception(f"t={t}大于max_t={self.max_t}")
 
-        if not hasattr(self, 'tc'):
-            self.tc = np.random.poisson(lam=3, size=(self.max_t, 100))
+        # if not hasattr(self, 'tc'):
+        #     self.tc = np.random.poisson(lam=3, size=(self.max_t, 100))
 
-        _, _, trigger_num, _ = self.reserve_sensor(t)
+        # _, _, trigger_num, _ = self.reserve_sensor(t)
 
-        # return (self.tc[t] > 3).sum() - trigger_num
-        return (self.tc[t] > 3).sum()
+        _, _, _, _, tc_num = self.con.cal_pre_accu(t, self.X2_pro)
+
+        # return (self.tc[t] > 3).sum()
+        return tc_num
 
     def reserve_sensor(self, t: int) -> int:
         """预测性预留节点，并记录触发和抢占情况
@@ -115,11 +117,19 @@ class RTSN(object):
             int:  存放固定预留RB上预留且触发且被抢占的节点数量
         """
         X2_pro = self.gen_pro(3)
-        _, pre_sensor, _, trigger_sensor = self.con.cal_pre_accu(
+        _, pre_sensor, _, trigger_sensor, _= self.con.cal_pre_accu(
             t, X2_pro)  # 预测t时刻触发节点
         # print(pre_sensor)
         # print(trigger_sensor)
-        pre_sensor = np.array(pre_sensor)[:self.res_rb_num]
+        pre_sensor_temp = np.zeros(self.res_rb_num)
+        pre_sensor_temp[0:len(pre_sensor)]
+        if len(pre_sensor) >= self.res_rb_num:
+            pre_sensor = np.array(pre_sensor)[:self.res_rb_num]    
+        # pre_sensor = np.array(pre_sensor)[:self.res_rb_num]
+        else:
+            pre_sensor_temp = np.zeros(self.res_rb_num)
+            pre_sensor_temp[0:len(pre_sensor)]
+            pre_sensor = pre_sensor_temp
         pre_sensor = pre_sensor.reshape(
             (self.C, self.res_subslot_num))  # 将预测节点存放至预留RB
         # print(pre_sensor)
@@ -184,8 +194,9 @@ class RTSN(object):
         fix_trigger_num, _, trigger_num, trigger_preempt_num = self.reserve_sensor(t)
         dynamic_tc_num = tc_num - trigger_num #求出动态接入部分的TC流数量
         ns_num, _, preempt_num = self.data_gen_ns(t)
-        s_ht = (1 - 1/self.C) * self.res_rb_num + \
-            dynamic_tc_num + ns_num - trigger_preempt_num
+        # s_ht = (1 - 1/self.C) * self.res_rb_num + \
+        #     dynamic_tc_num + ns_num - trigger_preempt_num
+        s_ht = tc_num + ns_num - trigger_preempt_num
         # dict = {'self.res_rb_num:': self.res_rb_num, 'tc_num:': tc_num, 'ns_num:': ns_num, 'self.res_subslot_num:': self.res_subslot_num,
         #         'preempt_num:': preempt_num, 'trigger_preempt_num:': trigger_preempt_num, 'self.signal_ratio:': self.signal_ratio, 's_ht:': s_ht, 'self.t_rb:': self.t_rb}
         # print(dict)
@@ -194,6 +205,15 @@ class RTSN(object):
         #     preempt_num - trigger_preempt_num)))*(1 + self.signal_ratio))/(self.C * 1))*self.t_rb/s_ht
         t_5G = np.trunc((self.res_rb_num + (dynamic_tc_num + ns_num - (
             preempt_num - trigger_preempt_num))*(1 + self.signal_ratio))/(self.C * 1))*self.t_rb
+
+        # if t_5G > 120 :
+        #     t_5G = 120
+
+        # dynamic_tc_nums = np.arange(0, dynamic_tc_num)
+        # t_5Gs = np.trunc((self.res_rb_num + (dynamic_tc_nums + ns_num - (
+        #     preempt_num - trigger_preempt_num))*(1 + self.signal_ratio))/(self.C * 1))*self.t_rb
+        
+
 
         return t_5G, s_ht
 
@@ -276,6 +296,7 @@ def save_file(res_num, t_5G, q_t, t_tsn, inte_delay, filepath):
     dataframe.to_csv(filepath)
 
 
+
 def get_data(runs: int, time: int, rtsn) -> list:
     """运行RTSN函数得到相应参数并存入列表
 
@@ -298,6 +319,7 @@ def get_data(runs: int, time: int, rtsn) -> list:
     # for i, rtsn in enumerate(rtsns):
     for r in trange(runs):
         # RTSN.reset()
+        rtsn.con._data["transmission probability"] = np.random.uniform(0, 1, rtsn.con._length)
         for t in range(time):
             t_5G = rtsn.cal_5G_delay(t)[0]
             t_5Gs.append(t_5G)
@@ -358,21 +380,35 @@ def travers_data(runs: int, time: int):
     rtsn = RTSN()
     r_rt = [i for i in range(rtsn.subslot+1)]  # self.subslot = 15
     all_t_tsns = np.zeros((len(r_rt), 8))
+    all_data = np.zeros((rtsn.subslot+1, 5)) #用来存放总数据
+
 
     for res in r_rt:
-        rtsns = RTSN(res_subslot_num=res)
+        rtsns = RTSN(res_subslot_num=res, max_t=time)
         all_t_tsns[res] = rtsns.cal_tsn_delay(0, np.arange(0, 8))
         t_5g = rtsns.cal_5G_delay(0)[0]
         all_t_tsns[res] += t_5g
 
         t_5Gs, t_tsns, q_ts, inte_delays = get_data(runs, time, rtsns)
+
+        all_data[res][0] = res
+        all_data[res][1] = np.mean(t_5Gs)
+        all_data[res][2] = np.argmax(np.bincount(q_ts))
+        all_data[res][3] = np.mean(t_tsns)
+        all_data[res][4] = np.mean(inte_delays)
+        
+                
         save_file(res, t_5Gs, q_ts, t_tsns, inte_delays,
                   f'data/RTSN_res/RTSN_res_{res}.csv')
-    print(all_t_tsns)
+        
+    np.savetxt('data/RTSN.csv', all_data)
+
+
+    # print(all_t_tsns)
 
 
 if __name__ == '__main__':
-    travers_data(runs=3, time=10)
+    travers_data(runs=1, time=45)
 
     # test(3,10)
 
