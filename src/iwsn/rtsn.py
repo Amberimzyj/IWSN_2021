@@ -17,12 +17,12 @@ from iwsn import contribution_rl
 
 class RTSN(object):
     def __init__(self,
-                 data_path: str = 'data/X2_pro.npz',
+                 data_path: str = 'data/X2_pro_3000.npz',
                  # TTI = 0,
                  C=4,
                  subslot=15,
                  t_rb=8,  # 8.888 < t_rb < 12.7777
-                 res_subslot_num=12,
+                 res_subslot_num=9,
                  signal_ratio=0.55,
                  t_tsn_max=128,
                  t_tsn_min=8,
@@ -406,9 +406,27 @@ def travers_data(runs: int, time: int):
 
     # print(all_t_tsns)
 
+def signal_ratio_5g(runs:int, time:int):
+    rtsn = RTSN()
+    signal_ratio = np.arange(0,1,0.05)
+    all_data = np.zeros((len(signal_ratio),5))
+
+    for i in range(len(signal_ratio)):
+        rtsns = RTSN(signal_ratio=signal_ratio[i], max_t=time)
+        t_5Gs, t_tsns, q_ts, inte_delays = get_data(runs, time, rtsns)
+        all_data[i][0] = signal_ratio[i]
+        all_data[i][1] = np.mean(t_5Gs)
+        all_data[i][2] = np.argmax(np.bincount(q_ts))
+        all_data[i][3] = np.mean(t_tsns)
+        all_data[i][4] = np.mean(inte_delays)
+
+    np.savetxt('data/RTSN_data/signal/signal_ratio.csv', all_data)
+
+
 
 if __name__ == '__main__':
-    travers_data(runs=1, time=45)
+    # travers_data(runs=1, time=45)
+    signal_ratio_5g(runs=1, time=45)
 
     # test(3,10)
 
