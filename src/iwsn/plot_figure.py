@@ -422,9 +422,9 @@ def save_figure6():
             all_data = np.loadtxt(csv_path)
             # inte_delay = all_data[:, 4]
             data_name = csv_path.stem
-            all_data -= all_data.min()
-            all_data /= all_data.max()
-            all_data = 1 - all_data
+            # all_data -= all_data.min()
+            # all_data /= all_data.max()
+            # all_data = 1 - all_data
 
             if (data_name == 'data_risk'):
                 x = 21
@@ -463,6 +463,6 @@ def save_figure6():
 
 
 if __name__ == '__main__':
-    save_figure3()
+    save_figure6()
 
     print('=> Generate done.')
