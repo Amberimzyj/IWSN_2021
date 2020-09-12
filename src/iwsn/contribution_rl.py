@@ -472,7 +472,7 @@ class SensorContrib(object):
             cond_ave_accs.append(self.cal_ave_pre_accu(0, (self.iteration_time-1), cond_pro))
             MI_ave_accs.append(self.cal_ave_pre_accu(0, (self.iteration_time-1), MI_pro))
             X2_ave_accs.append(self.cal_ave_pre_accu(0, (self.iteration_time-1), X2_pro))
-        select_ave_pre = self.algo_select(cond_ave_accs, MI_ave_accs, X2_ave_accs)
+        select_ave_pre = self.algo_select(MI_ave_accs, X2_ave_accs)
         plt.plot(np.arange(1, cir_num), cond_ave_accs, 'b', label='CP')
         plt.plot(np.arange(1, cir_num), MI_ave_accs, 'g', label='MI')
         plt.plot(np.arange(1, cir_num), X2_ave_accs, 'r', label='X2')
@@ -485,7 +485,7 @@ class SensorContrib(object):
         plt.show()
 
         
-        np.savetxt('data/pre_accu/cond_pre_accu.csv', cond_ave_accs)
+        # np.savetxt('data/pre_accu/cond_pre_accu.csv', cond_ave_accs)
         np.savetxt('data/pre_accu/MI_pre_accu.csv', MI_ave_accs)
         np.savetxt('data/pre_accu/X2_pre_accu.csv', X2_ave_accs)
         np.savetxt('data/pre_accu/select_pre_accu.csv', select_ave_pre)

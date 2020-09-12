@@ -38,7 +38,7 @@ def save_figure1():
     plt.rcParams["legend.edgecolor"] = '0.5'  # 设置图例边框深浅
 
     fig, ax = plt.subplots(figsize=(7, 5))
-    axins = ax.inset_axes((0.25, 0.2, 0.4, 0.35))
+    axins = ax.inset_axes((0.25, 0.15, 0.45, 0.45))
     axins.set_xlim(4, 8)
     axins.set_ylim(0.7, 0.85)
     axins.set_xticks(np.arange(4, 8, 1))
@@ -66,9 +66,9 @@ def save_figure1():
     plt.yticks(np.arange(0, 1, 0.1))
     plt.grid(linestyle='-.')
     plt.legend(bbox_to_anchor=(1, 0), handles=handles,
-               labels=labels, loc='lower right')
-    plt.xlabel('Transmission Time Interval(TTI)')
-    plt.ylabel('Average Successful Prediction Ratio')
+               labels=labels, loc='lower right',fontsize = 'large')
+    plt.xlabel('Iteration Times',fontsize = 'xx-large')
+    plt.ylabel('Average Successful Prediction Ratio',fontsize = 'xx-large')
     plt.show()
 
     fig.savefig(data_path / 'ave_pre_accu.pdf', dpi=600, format='pdf')
@@ -89,7 +89,7 @@ def save_figure2():
     plt.rcParams["legend.edgecolor"] = '0.5'  # 设置图例边框深浅
 
     # 局部放大
-    fig, ax = plt.subplots(figsize=(10, 5))
+    fig, ax = plt.subplots(figsize=(6.5, 5))
     axins = ax.inset_axes((0.15, 0.4, 0.2, 0.5))
     axins.set_xlim(6, 8)
     axins.set_ylim(90, 140)
@@ -132,9 +132,9 @@ def save_figure2():
     # plt.yticks(np.arange(0, 1, 0.1))
     plt.grid(linestyle='-.')
     plt.legend(bbox_to_anchor=(1, 0), handles=handles,
-               labels=labels, loc='lower right', fontsize='large')
-    plt.xlabel('Reserved RB numbers')
-    plt.ylabel('Latency of 5G network')
+               labels=labels, loc='lower right', fontsize='medium')
+    plt.xlabel('Reserved RB Numbers',fontsize = 'x-large')
+    plt.ylabel('Latency of 5G Network',fontsize = 'x-large')
     plt.show()
 
     # fig.savefig(data_path / 'ave_pre_accu.pdf', dpi=600, format='pdf')
@@ -144,7 +144,7 @@ def save_figure3():
     #res —— t_5g,t_tsn
 
     # royalblue darkorange tomato forestgreen
-    style_dict = {'RTSN_3000': '.--', 'RTSN_4500': 'o-', 'RTSN_6000': '^--'}
+    style_dict = {'RTSN_3000': '*--', 'RTSN_4500': 'o-', 'RTSN_6000': '^--'}
     metric_dict = {'RTSN_3000': 'Data Size:3000 ',
                    'RTSN_4500': 'Data Size:4500', 'RTSN_6000': 'Data Size:6000 '}
     # metirc_order = {'X2': 1, 'MI': 2, 'Cond': 3, 'Select': 4}
@@ -155,20 +155,20 @@ def save_figure3():
     plt.rcParams["legend.edgecolor"] = '0.5'  # 设置图例边框深浅
 
     # 局部放大
-    fig, ax = plt.subplots(figsize=(10, 5))
-    axins = ax.inset_axes((0.65, 0.35, 0.3, 0.35))
+    fig, ax = plt.subplots(figsize=(6.5, 5))
+    axins = ax.inset_axes((0.65, 0.25, 0.3, 0.35))
     axins.set_xlim(6, 8)
     axins.set_ylim(90, 140)
     axins.set_xticks(np.arange(6, 8, 0.5))
     axins.set_yticks(np.arange(90, 140, 10))
     axins.grid(linestyle='-.')
 
-    axins1 = ax.inset_axes((0.15, 0.1, 0.2, 0.23))
-    axins1.set_xlim(2, 4)
-    axins1.set_ylim(100, 130)
-    axins1.set_xticks(np.arange(2, 4, 0.5))
-    axins1.set_yticks(np.arange(100, 130, 10))
-    axins1.grid(linestyle='-.')
+    # axins1 = ax.inset_axes((0.25, 0.25, 0.2, 0.23))
+    # axins1.set_xlim(2, 4)
+    # axins1.set_ylim(100, 130)
+    # axins1.set_xticks(np.arange(2, 4, 0.5))
+    # axins1.set_yticks(np.arange(100, 130, 10))
+    # axins1.grid(linestyle='-.')
 
     # axins1 = ax.inset_axes((0.6, 0.3, 0.3, 0.2))
     # axins1.set_xlim(9, 11)
@@ -176,6 +176,8 @@ def save_figure3():
     # axins1.set_xticks(np.arange(9, 11, 0.5))
     # axins1.set_yticks(np.arange(180, 210, 10))
     # axins1.grid(linestyle='-.')
+
+
 
 
     data_path = Path("data/RTSN_data/5g_tsn")
@@ -187,34 +189,33 @@ def save_figure3():
         t_tsn = all_data[:, 3]
         inte_delay = all_data[:, 4]
         data_name = csv_path.stem
-        line,  = plt.plot(
-            res, t_5G, style_dict[data_name], color=color_dict[data_name], linewidth=0.8)
+        line,  = plt.plot(res, t_5G, style_dict[data_name], color=color_dict[data_name], linewidth=0.8)
         line.set_label(f'{metric_dict[data_name]}')
-        line,  = plt.plot(
-            res, t_tsn, style_dict[data_name], color=color_dict[data_name], linewidth=0.8)
+        line,  = plt.plot(res, t_tsn, style_dict[data_name], color=color_dict[data_name], linewidth=0.8)
+        line,  = plt.plot(res, inte_delay, style_dict[data_name], color=color_dict[data_name], linewidth=0.8)
         # line.set_label(f'{metric_dict[data_name]}')
-        axins.plot(
-            res, t_5G,  style_dict[data_name], color=color_dict[data_name])
-        axins.plot(
-            res, t_tsn,  style_dict[data_name], color=color_dict[data_name])
-        axins1.plot(
-            res, t_5G,  style_dict[data_name], color=color_dict[data_name])
-        axins1.plot(
-            res, t_tsn,  style_dict[data_name], color=color_dict[data_name])
+        axins.plot(res, t_5G,  style_dict[data_name], color=color_dict[data_name])
+        axins.plot(res, t_tsn,  style_dict[data_name], color=color_dict[data_name])
+        # axins1.plot(res, t_5G,  style_dict[data_name], color=color_dict[data_name])
+        # axins1.plot(res, t_tsn,  style_dict[data_name], color=color_dict[data_name])
+    
+    #存放ddl
+    t_ddl = 250*np.ones(16)
+    line,  = plt.plot(res, t_ddl, style_dict[data_name], color=color_dict[data_name], linewidth=0.8)
 
     # #处理图例
     handles, labels = plt.gca().get_legend_handles_labels()
 
     ax.indicate_inset_zoom(axins)
-    ax.indicate_inset_zoom(axins1)
+    # ax.indicate_inset_zoom(axins1)
 
     # mark_inset(ax, axins, loc1=3, loc2=1, fc="none", ec='k', lw=1)
-    plt.xticks(np.arange(0, 15, 2))
-    # plt.yticks(np.arange(0, 1, 0.1))
+    plt.xticks(np.arange(0, 16, 1))
+    plt.yticks(np.arange(0, 310, 50))
     plt.grid(linestyle='-.')
-    plt.legend(bbox_to_anchor=(0, 1), handles=handles, labels=labels, loc='upper left', fontsize = 'medium')
-    plt.xlabel('Reserved RB numbers',fontsize = 'x-large')
-    plt.ylabel('Latency of 5G/TSN network',fontsize = 'x-large')
+    plt.legend(bbox_to_anchor=(0, 0), handles=handles, labels=labels, loc='lower left', fontsize = 'medium')
+    plt.xlabel('Reserved RB Numbers',fontsize = 'x-large')
+    plt.ylabel('Latency of 5G/TSN Network',fontsize = 'x-large')
     plt.show()
 
     # fig.savefig(data_path / 'ave_pre_accu.pdf', dpi=600, format='pdf')
@@ -225,17 +226,19 @@ def save_figure4():
 
     # royalblue darkorange tomato forestgreen
     style_dict = {'RTSN_3000': '.--', 'RTSN_4500': 'o-', 'RTSN_6000': '^--'}
-    metric_dict = {'RTSN_3000': '3000 ',
-                   'RTSN_4500': '4500', 'RTSN_6000': '6000 '}
+    metric_dict = {'RTSN_3000': 'Size:3000 ',
+                   'RTSN_4500': 'Size:4500', 'RTSN_6000': 'Size:6000 '}
     # metirc_order = {'X2': 1, 'MI': 2, 'Cond': 3, 'Select': 4}
     color_dict = {'RTSN_3000': 'forestgreen',
                   'RTSN_4500': 'royalblue', 'RTSN_6000': 'tomato'}
 
     plt.rcParams["legend.facecolor"] = 'whitesmoke'  # 设置图例背景色
     plt.rcParams["legend.edgecolor"] = '0.5'  # 设置图例边框深浅
+    t_5g_color = 'deeppink' #设置5G线条、label等的颜色
+    t_tsn_color = 'royalblue' #设置TSN线条、label等的颜色
 
     # 局部放大
-    fig, ax = plt.subplots(figsize=(10, 5))
+    fig, ax = plt.subplots(figsize=(6.5, 5))
     # axins = ax.inset_axes((0.65, 0.35, 0.3, 0.35))
     # axins.set_xlim(6, 8)
     # axins.set_ylim(90, 140)
@@ -246,7 +249,7 @@ def save_figure4():
     # 设置右边的Y轴
     ax2 = ax.twinx()
     ax2.set_ylim(0, 5)
-    ax2.set_ylabel('Queue index of TSN gateway')
+    ax2.set_ylabel('Queue Index of TSN Gateway')
 
     data_path = Path("data/RTSN_data/q_t")
     for csv_path in data_path.glob('*.csv'):
@@ -257,14 +260,12 @@ def save_figure4():
         t_tsn = all_data[:, 3]
         inte_delay = all_data[:, 4]
         data_name = csv_path.stem
-        line,  = ax.plot(
-            res, t_5G, style_dict[data_name], color='r', linewidth=0.8)
-        line.set_label(f'5G delay: {metric_dict[data_name]}')
+        line,  = ax.plot(res, t_5G, style_dict[data_name], color= t_5g_color, linewidth=0.8)
+        line.set_label(f'5G Delay: {metric_dict[data_name]}')
         # line,  = plt.plot(res, q_t, style_dict[data_name], color=color_dict[data_name], linewidth=0.8)
         # line.set_label(f'{metric_dict[data_name]}')
         # axins.plot(res, t_5G,  style_dict[data_name], color=color_dict[data_name])
-        line, = ax2.plot(
-            res, q_t, style_dict[data_name], color='b')
+        line, = ax2.plot(res, q_t, style_dict[data_name], color= t_tsn_color)
         line.set_label(f'Q_t: {metric_dict[data_name]}')
 
     # #处理图例
@@ -278,18 +279,18 @@ def save_figure4():
 
     # mark_inset(ax, axins, loc1=3, loc2=1, fc="none", ec='k', lw=1)
     ax.set_xticks(np.arange(0, 15, 2))
-    ax.set_xlabel('Reserved RB numbers')
+    ax.set_xlabel('Reserved RB Numbers',fontsize = 'x-large')
     # plt.yticks(np.arange(0, 1, 0.1))
     ax.set_ylim(0, 250, 10)
-    ax.tick_params(axis='y', labelcolor='r')
-    ax.set_ylabel('5G delay', color='r')
+    ax.tick_params(axis='y', labelcolor= t_5g_color)
+    ax.set_ylabel('Latency of 5G Network', color= t_5g_color,fontsize = 'x-large')
 
-    ax2.tick_params(axis='y', labelcolor='b')
-    ax2.set_ylabel('Qt', color='b')
+    ax2.tick_params(axis='y', labelcolor= t_tsn_color)
+    ax2.set_ylabel('Queue Index of TSN Gateway', color= t_tsn_color,fontsize = 'x-large')
 
     plt.grid(linestyle='-.')
-    plt.legend(bbox_to_anchor=(0, 1), handles=handles,
-               labels=labels, loc='upper left', fontsize='medium')
+    plt.legend(bbox_to_anchor=(0, 0), handles=handles,
+               labels=labels, loc='lower left', fontsize='small',ncol = 2)
     plt.show()
 
     # fig.savefig(data_path / 'ave_pre_accu.pdf', dpi=600, format='pdf')
@@ -307,7 +308,7 @@ def save_figure5():
     plt.rcParams["legend.edgecolor"] = '0.5'  # 设置图例边框深浅
 
     #局部放大
-    # fig, ax= plt.subplots(figsize=(10, 5))
+    fig, ax= plt.subplots(figsize=(6.5, 5))
     # axins = ax.inset_axes((0.65, 0.35, 0.3, 0.35))
     # axins.set_xlim(6, 8)
     # axins.set_ylim(90, 140)
@@ -351,12 +352,90 @@ def save_figure5():
     # ax.indicate_inset_zoom(axins1)
 
     # mark_inset(ax, axins, loc1=3, loc2=1, fc="none", ec='k', lw=1)
-    plt.xticks(np.arange(0, 1, 0.05))
-    # plt.yticks(np.arange(0, 1, 0.1))
+    plt.xticks(np.arange(0, 1, 0.1))
+    plt.yticks(np.arange(60,250, 20))
     plt.grid(linestyle='-.')
     plt.legend(bbox_to_anchor=(0, 1), handles=handles, labels=labels, loc='upper left', fontsize = 'small', ncol = 2)
     plt.xlabel('Signal Ratio',fontsize = 'x-large')
-    plt.ylabel('Latency of 5G network',fontsize = 'x-large')
+    plt.ylabel('Latency of 5G Network',fontsize = 'x-large')
+    plt.show()
+
+    # fig.savefig(data_path / 'ave_pre_accu.pdf', dpi=600, format='pdf')
+
+def save_figure6():
+    #step —— risk —— classical
+
+     # royalblue darkorange tomato forestgreen
+    style_dict = {'20':'-', '100':'-', '500': '-'}
+    metric_dict = {'data_risk': 'Risk-sensitive Learning', 'data_without_risk': 'Classical Learning'}
+    # metirc_order = {'X2': 1, 'MI': 2, 'Cond': 3, 'Select': 4}
+    color_dict = {'data_risk': 'royalblue', 'data_without_risk': 'tomato'}
+
+    plt.rcParams["legend.facecolor"] = 'whitesmoke'  # 设置图例背景色
+    plt.rcParams["legend.edgecolor"] = '0.5'  # 设置图例边框深浅
+
+    #局部放大
+    fig, (ax1, ax2, ax3)= plt.subplots(3, 1)
+    ax_dict = {'500': ax3, '100': ax2, '20': ax1}
+    # axins = ax.inset_axes((0.65, 0.35, 0.3, 0.35))
+    # axins.set_xlim(6, 8)
+    # axins.set_ylim(90, 140)
+    # axins.set_xticks(np.arange(6, 8, 0.5))
+    # axins.set_yticks(np.arange(90, 140, 10))
+    # axins.grid(linestyle='-.')
+
+    # axins1 = ax.inset_axes((0.15, 0.1, 0.2, 0.23))
+    # axins1.set_xlim(2, 4)
+    # axins1.set_ylim(100, 130)
+    # axins1.set_xticks(np.arange(2, 4, 0.5))
+    # axins1.set_yticks(np.arange(100, 130, 10))
+    # axins1.grid(linestyle='-.')
+
+
+
+    data_path = Path("data/Bandit_data/using")
+    for sub_dir in data_path.glob('*'):
+        nodes = sub_dir.stem
+        ax = ax_dict[nodes]
+        for csv_path in sub_dir.glob('*.csv'):
+            all_data = np.loadtxt(csv_path)
+            # inte_delay = all_data[:, 4]
+            data_name = csv_path.stem
+            all_data -= all_data.min()
+            all_data /= all_data.max()
+            all_data = 1 - all_data
+
+            if (data_name == 'data_risk'):
+                x = 21
+                y = all_data[x]
+            line,  = ax.plot(all_data, style_dict[nodes], color=color_dict[data_name], linewidth=1.5)
+            ax.grid(linestyle='-.')
+            # line,  = plt.plot(-all_data[1], style_dict[data_name], color=color_dict[data_name], linewidth=0.8)
+            line.set_label(f'{metric_dict[data_name]} (runs:{nodes})')
+            handles, labels = ax.get_legend_handles_labels()
+            ax.legend(bbox_to_anchor=(1, 1), handles=handles, labels=labels, loc='upper right', fontsize = 'small')
+            ax.set_xlabel('Learning Steps',fontsize = 'x-large')
+            # ax.set_ylabel('Latency of 5G network',fontsize = 'medium')
+            # line,  = plt.plot(signal_ratio, t_tsn, style_dict[data_name], color=color_dict[data_name], linewidth=0.8)
+            # line.set_label(f'{metric_dict[data_name]}')
+            # axins.plot(signal_ratio, t_5G,  style_dict[data_name], color=color_dict[data_name])
+            # axins.plot(signal_ratio, t_tsn,  style_dict[data_name], color=color_dict[data_name])
+            # axins1.plot(res, t_5G,  style_dict[data_name], color=color_dict[data_name])
+            # axins1.plot(res, t_tsn,  style_dict[data_name], color=color_dict[data_name])
+    ax2.set_ylabel('Relative Difference from True Reward',fontsize = 'x-large')
+    ax3.annotate('The scope of Risk-sensitive Learning is much more higher.', xy=(x, y), xytext=(x+90, y+0.4), arrowprops=dict(arrowstyle='->'),fontsize = 'x-large')
+    # #处理图例
+    
+
+    # ax.indicate_inset_zoom(axins)
+    # ax.indicate_inset_zoom(axins1)
+
+    # mark_inset(ax, axins, loc1=3, loc2=1, fc="none", ec='k', lw=1)
+    # plt.xticks(np.arange(0, 1, 0.05))
+    # plt.yticks(np.arange(0, 1, 0.1))
+    
+    
+    
     plt.show()
 
     # fig.savefig(data_path / 'ave_pre_accu.pdf', dpi=600, format='pdf')
