@@ -422,9 +422,9 @@ def save_figure6():
             all_data = np.loadtxt(csv_path)
             # inte_delay = all_data[:, 4]
             data_name = csv_path.stem
-            # all_data -= all_data.min()
-            # all_data /= all_data.max()
-            # all_data = 1 - all_data
+            all_data -= all_data.min()
+            all_data /= all_data.max()
+            all_data = 1 - all_data
 
             if (data_name == 'data_risk'):
                 x = 21
@@ -462,7 +462,85 @@ def save_figure6():
     # fig.savefig(data_path / 'ave_pre_accu.pdf', dpi=600, format='pdf')
 
 
+def save_figure7():
+    # step —— risk —— classical
+
+    # royalblue darkorange tomato forestgreen
+    style_dict = {'20': '-', '100': '-', '500': '-'}
+    metric_dict = {'data_risk': 'Risk-sensitive Learning',
+                   'data_without_risk': 'Classical Learning'}
+    # metirc_order = {'X2': 1, 'MI': 2, 'Cond': 3, 'Select': 4}
+    color_dict = {'data_risk': 'royalblue', 'data_without_risk': 'tomato'}
+
+    plt.rcParams["legend.facecolor"] = 'whitesmoke'  # 设置图例背景色
+    plt.rcParams["legend.edgecolor"] = '0.5'  # 设置图例边框深浅
+
+    # 局部放大
+    fig, (ax1, ax2, ax3) = plt.subplots(3, 1)
+    ax_dict = {'500': ax3, '100': ax2, '20': ax1}
+    # axins = ax.inset_axes((0.65, 0.35, 0.3, 0.35))
+    # axins.set_xlim(6, 8)
+    # axins.set_ylim(90, 140)
+    # axins.set_xticks(np.arange(6, 8, 0.5))
+    # axins.set_yticks(np.arange(90, 140, 10))
+    # axins.grid(linestyle='-.')
+
+    # axins1 = ax.inset_axes((0.15, 0.1, 0.2, 0.23))
+    # axins1.set_xlim(2, 4)
+    # axins1.set_ylim(100, 130)
+    # axins1.set_xticks(np.arange(2, 4, 0.5))
+    # axins1.set_yticks(np.arange(100, 130, 10))
+    # axins1.grid(linestyle='-.')
+
+    data_path = Path("data/Bandit_data/inte_delay")
+    for sub_dir in data_path.glob('*'):
+        nodes = sub_dir.stem
+        ax = ax_dict[nodes]
+        for csv_path in sub_dir.glob('*.csv'):
+            all_data = np.loadtxt(csv_path)
+            # inte_delay = all_data[:, 4]
+            data_name = csv_path.stem
+            # all_data -= all_data.min()
+            # all_data /= all_data.max()
+            # all_data = 1 - all_data
+
+            if (data_name == 'data_risk'):
+                x = 21
+                y = all_data[x]
+            line,  = ax.plot(
+                all_data, style_dict[nodes], color=color_dict[data_name], linewidth=1.5)
+            ax.grid(linestyle='-.')
+            # line,  = plt.plot(-all_data[1], style_dict[data_name], color=color_dict[data_name], linewidth=0.8)
+            line.set_label(f'{metric_dict[data_name]} (runs:{nodes})')
+            handles, labels = ax.get_legend_handles_labels()
+            ax.legend(bbox_to_anchor=(1, 1), handles=handles,
+                      labels=labels, loc='upper right', fontsize='small')
+            ax.set_xlabel('Learning Steps', fontsize='x-large')
+            # ax.set_ylabel('Latency of 5G network',fontsize = 'medium')
+            # line,  = plt.plot(signal_ratio, t_tsn, style_dict[data_name], color=color_dict[data_name], linewidth=0.8)
+            # line.set_label(f'{metric_dict[data_name]}')
+            # axins.plot(signal_ratio, t_5G,  style_dict[data_name], color=color_dict[data_name])
+            # axins.plot(signal_ratio, t_tsn,  style_dict[data_name], color=color_dict[data_name])
+            # axins1.plot(res, t_5G,  style_dict[data_name], color=color_dict[data_name])
+            # axins1.plot(res, t_tsn,  style_dict[data_name], color=color_dict[data_name])
+    ax2.set_ylabel('Total Delay of HTSN (us)', fontsize='x-large')
+    ax3.annotate('The scope of Risk-sensitive Learning is much more higher.', xy=(x, y),
+                 xytext=(x+90, y+0.4), arrowprops=dict(arrowstyle='->'), fontsize='x-large')
+    # #处理图例
+
+    # ax.indicate_inset_zoom(axins)
+    # ax.indicate_inset_zoom(axins1)
+
+    # mark_inset(ax, axins, loc1=3, loc2=1, fc="none", ec='k', lw=1)
+    # plt.xticks(np.arange(0, 1, 0.05))
+    # plt.yticks(np.arange(0, 1, 0.1))
+
+    plt.show()
+
+    # fig.savefig(data_path / 'ave_pre_accu.pdf', dpi=600, format='pdf')
+
+
 if __name__ == '__main__':
-    save_figure6()
+    save_figure7()
 
     print('=> Generate done.')

@@ -65,7 +65,7 @@ class Bandit:
         for res in range(self.rtsn.subslot):
             # sum = np.sum(self.RTSN_data[res][name])/10000
             mean = -np.mean(self.RTSN_data[res][name])
-            classical_true_value.append(mean)
+            classical_true_value.append(mean/2)
             # 计算risk-sensitive的reward，k是高阶量的系数
             risk_value = -np.exp(-1*k*mean/100)
             risk_true_value.append(risk_value)
@@ -217,9 +217,13 @@ def figure_inte_delay(runs=[20, 100, 500], time=1000):
 
     for run in runs:
         base_dir = Path('data/Bandit_data/using') / str(run)
+        delay_base_dir = Path('data/Bandit_data/inte_delay') / str(run)
+        if delay_base_dir.exists():
+            shutil.rmtree(delay_base_dir)
+        delay_base_dir.mkdir(parents=True)
         if base_dir.exists():
             shutil.rmtree(base_dir)
-        base_dir.mkdir()
+        base_dir.mkdir(parents=True)
 
         for with_risk in [True, False]:
             _, rewards, inte_delays = simulate(
@@ -245,9 +249,12 @@ def figure_inte_delay(runs=[20, 100, 500], time=1000):
             # plt.show()
 
             if (with_risk):
-                np.savetxt(base_dir / 'data_risk.csv', inte_delays)
+                np.savetxt(base_dir / 'data_risk.csv', rewards)
+                np.savetxt(delay_base_dir / 'data_risk.csv', inte_delays)
             else:
-                np.savetxt(base_dir / 'data_without_risk.csv', inte_delays)
+                np.savetxt(base_dir / 'data_without_risk.csv', rewards)
+                np.savetxt(delay_base_dir /
+                           'data_without_risk.csv', inte_delays)
 
 
 if __name__ == '__main__':
