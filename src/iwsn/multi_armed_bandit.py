@@ -64,9 +64,10 @@ class Bandit:
         risk_true_value = []
         for res in range(self.rtsn.subslot):
             # sum = np.sum(self.RTSN_data[res][name])/10000
-            mean = -np.mean(self.RTSN_data[res][name])/100
+            mean = -np.mean(self.RTSN_data[res][name])
             classical_true_value.append(mean)
-            risk_value = -np.exp(-1*k*mean)  # 计算risk-sensitive的reward，k是高阶量的系数
+            # 计算risk-sensitive的reward，k是高阶量的系数
+            risk_value = -np.exp(-1*k*mean/100)
             risk_true_value.append(risk_value)
         return classical_true_value, risk_true_value
 
@@ -164,6 +165,7 @@ def simulate(runs, time, bandits, with_risk):
             bandit.reset(with_risk)
             for t in range(time):
                 action = bandit.act()
+                # print(action)
                 reward, inte_delay = bandit.step(action)
                 rewards[i, r, t] = reward
                 inte_delays[i, r, t] = inte_delay
@@ -171,8 +173,7 @@ def simulate(runs, time, bandits, with_risk):
                     best_action_counts[i, r, t] = 1
     mean_best_action_counts = best_action_counts.mean(axis=1)
     mean_rewards = rewards.mean(axis=1)
-    rewards = rewards.mean(axis=1)
-    return mean_best_action_counts, mean_rewards, rewards, inte_delays.mean(axis=1)
+    return mean_best_action_counts, mean_rewards, inte_delays.mean(axis=1)
 
 
 def figure_2_5(runs=2000, time=1000):
@@ -221,7 +222,7 @@ def figure_inte_delay(runs=[20, 100, 500], time=1000):
         base_dir.mkdir()
 
         for with_risk in [True, False]:
-            _, _, rewards, inte_delays = simulate(
+            _, rewards, inte_delays = simulate(
                 run, time, bandits, with_risk)
             data = np.zeros((len(bandits), 2))
 
