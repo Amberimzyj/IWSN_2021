@@ -287,10 +287,17 @@ def save_figure4():
         line.set_label(f'Q_t: {metric_dict[data_name]}')
 
     # #处理图例
-    ax_handles_labels = ax.get_legend_handles_labels()
-    ax2_handle_labels = ax2.get_legend_handles_labels()
-    handles, labels = list(
-        map(lambda x: x[0]+x[1], zip(ax_handles_labels, ax2_handle_labels)))
+    # ax_handles_labels = ax.get_legend_handles_labels()
+    # ax2_handle_labels = ax2.get_legend_handles_labels()
+    # handles, labels = list(
+    #     map(lambda x: x[0]+x[1], zip(ax_handles_labels, ax2_handle_labels)))
+
+    handles = []
+    handles.append(mlines.Line2D([], [], color=t_5g_color, label='5G'))
+    handles.append(mlines.Line2D([], [], color=t_tsn_color, label='TSN'))
+    for k, v in style_dict.items():
+        handles.append(mlines.Line2D(
+            [], [], marker=v[0], linestyle=v[1:], markerfacecolor='none', color='dimgray', label=metric_dict[k]))
 
     # ax.indicate_inset_zoom(axins)
     # ax.indicate_inset_zoom(axins1)
@@ -310,7 +317,7 @@ def save_figure4():
 
     plt.grid(linestyle='-.')
     plt.legend(bbox_to_anchor=(0, 0), handles=handles,
-               labels=labels, loc='lower left', fontsize='small', ncol=2)
+               loc='lower left', fontsize='small')
     plt.show()
 
     # fig.savefig(data_path / 'ave_pre_accu.pdf', dpi=600, format='pdf')
@@ -369,7 +376,13 @@ def save_figure5():
             # axins1.plot(res, t_tsn,  style_dict[data_name], color=color_dict[data_name])
 
     # #处理图例
-    handles, labels = plt.gca().get_legend_handles_labels()
+    # handles, labels = plt.gca().get_legend_handles_labels()
+    handles = []
+    for k, v in color_dict.items():
+        handles.append(mlines.Line2D([], [], color=v, label=f'|Rr,t|: {k}'))
+    for k, v in style_dict.items():
+        handles.append(mlines.Line2D(
+            [], [], marker=v[0], linestyle=v[1:], markerfacecolor='none', color='dimgray', label=metric_dict[k]))
 
     # ax.indicate_inset_zoom(axins)
     # ax.indicate_inset_zoom(axins1)
@@ -378,7 +391,7 @@ def save_figure5():
     plt.xticks(np.arange(0, 1, 0.1))
     plt.yticks(np.arange(60, 250, 20))
     plt.grid(linestyle='-.')
-    plt.legend(bbox_to_anchor=(0, 1), handles=handles, labels=labels,
+    plt.legend(bbox_to_anchor=(0, 1), handles=handles,
                loc='upper left', fontsize='small', ncol=2)
     plt.xlabel('Signal Ratio', fontsize='xx-large')
     plt.ylabel('Latency of 5G Network (us)', fontsize='xx-large')
@@ -526,7 +539,8 @@ def save_figure7():
             # axins.plot(signal_ratio, t_tsn,  style_dict[data_name], color=color_dict[data_name])
             # axins1.plot(res, t_5G,  style_dict[data_name], color=color_dict[data_name])
             # axins1.plot(res, t_tsn,  style_dict[data_name], color=color_dict[data_name])
-    ax2.set_ylabel('Total Delay of HTSN (us)', labelpad=10, fontsize='xx-large')
+    ax2.set_ylabel('Total Delay of HTSN (us)',
+                   labelpad=10, fontsize='xx-large')
     ax3.annotate('The scope of Risk-sensitive Learning is much higher.', xy=(x, y),
                  xytext=(x+90, y+2.8), arrowprops=dict(arrowstyle='->'), fontsize='xx-large')
     ax3.set_xlabel('Learning Steps', fontsize='xx-large')
@@ -545,6 +559,6 @@ def save_figure7():
 
 
 if __name__ == '__main__':
-    save_figure1()
+    save_figure5()
 
     print('=> Generate done.')
