@@ -214,10 +214,11 @@ def save_figure3():
     handles = []
     handles.append(mlines.Line2D([], [], color='deeppink', label='5G'))
     handles.append(mlines.Line2D([], [], color='royalblue', label='TSN'))
-    handles.append(mlines.Line2D([], [], color='forestgreen', label='Total Delay'))
+    handles.append(mlines.Line2D(
+        [], [], color='forestgreen', label='Total Delay'))
     for k, v in style_dict.items():
         handles.append(mlines.Line2D(
-            [], [], marker=v[0], linestyle=v[1:], markerfacecolor='none', color = 'dimgray', label=k))
+            [], [], marker=v[0], linestyle=v[1:], markerfacecolor='none', color='dimgray', label=k))
 
     ax.indicate_inset_zoom(axins)
     # ax.indicate_inset_zoom(axins1)
@@ -424,7 +425,7 @@ def save_figure6():
             data_name = csv_path.stem
             all_data -= all_data.min()
             all_data /= all_data.max()
-            all_data = 1 - all_data
+            # all_data = 1 - all_data
 
             if (data_name == 'data_risk'):
                 x = 21
@@ -541,7 +542,6 @@ def save_figure7():
 
 
 if __name__ == '__main__':
-    save_figure7()
+    save_figure6()
 
     print('=> Generate done.')
-    

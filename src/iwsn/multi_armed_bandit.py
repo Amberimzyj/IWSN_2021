@@ -173,7 +173,8 @@ def simulate(runs, time, bandits, with_risk):
                     best_action_counts[i, r, t] = 1
     mean_best_action_counts = best_action_counts.mean(axis=1)
     mean_rewards = rewards.mean(axis=1)
-    return mean_best_action_counts, mean_rewards, inte_delays.mean(axis=1)
+    mean_inte_delays = inte_delays.mean(axis=1)
+    return mean_best_action_counts, mean_rewards, mean_inte_delays
 
 
 def figure_2_5(runs=2000, time=1000):
