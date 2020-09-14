@@ -516,7 +516,7 @@ def save_figure7():
             handles, labels = ax.get_legend_handles_labels()
             ax.legend(bbox_to_anchor=(1, 1), handles=handles,
                       labels=labels, loc='upper right', fontsize='small')
-            ax.set_xlabel('Learning Steps', fontsize='x-large')
+            # ax.set_xlabel('Learning Steps', fontsize='x-large')
             # ax.set_ylabel('Latency of 5G network',fontsize = 'medium')
             # line,  = plt.plot(signal_ratio, t_tsn, style_dict[data_name], color=color_dict[data_name], linewidth=0.8)
             # line.set_label(f'{metric_dict[data_name]}')
@@ -524,9 +524,10 @@ def save_figure7():
             # axins.plot(signal_ratio, t_tsn,  style_dict[data_name], color=color_dict[data_name])
             # axins1.plot(res, t_5G,  style_dict[data_name], color=color_dict[data_name])
             # axins1.plot(res, t_tsn,  style_dict[data_name], color=color_dict[data_name])
-    ax2.set_ylabel('Total Delay of HTSN (us)', fontsize='x-large')
+    ax2.set_ylabel('Total Delay of HTSN (us)', labelpad=10, fontsize='x-large')
     ax3.annotate('The scope of Risk-sensitive Learning is much higher.', xy=(x, y),
                  xytext=(x+90, y+2.8), arrowprops=dict(arrowstyle='->'), fontsize='x-large')
+    ax3.set_xlabel('Learning Steps', fontsize='x-large')
     # #处理图例
 
     # ax.indicate_inset_zoom(axins)
@@ -542,6 +543,6 @@ def save_figure7():
 
 
 if __name__ == '__main__':
-    save_figure6()
+    save_figure7()
 
     print('=> Generate done.')
