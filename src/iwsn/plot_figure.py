@@ -134,7 +134,7 @@ def save_figure2():
     plt.legend(bbox_to_anchor=(1, 0), handles=handles,
                labels=labels, loc='lower right', fontsize='medium')
     plt.xlabel('Reserved RB Numbers', fontsize='x-large')
-    plt.ylabel('Latency of 5G Network', fontsize='x-large')
+    plt.ylabel('Latency of 5G Network(us)', fontsize='x-large')
     plt.show()
 
     # fig.savefig(data_path / 'ave_pre_accu.pdf', dpi=600, format='pdf')
@@ -212,12 +212,12 @@ def save_figure3():
     # #处理图例
     # handles, labels = plt.gca().get_legend_handles_labels()
     handles = []
-    handles.append(mlines.Line2D([], [], color='forestgreen', label='5G'))
+    handles.append(mlines.Line2D([], [], color='deeppink', label='5G'))
     handles.append(mlines.Line2D([], [], color='royalblue', label='TSN'))
-    handles.append(mlines.Line2D([], [], color='tomato', label='Total Delay'))
+    handles.append(mlines.Line2D([], [], color='forestgreen', label='Total Delay'))
     for k, v in style_dict.items():
         handles.append(mlines.Line2D(
-            [], [], marker=v[0], linestyle=v[1:], markerfacecolor='none', label=k))
+            [], [], marker=v[0], linestyle=v[1:], markerfacecolor='none', color = 'dimgray', label=k))
 
     ax.indicate_inset_zoom(axins)
     # ax.indicate_inset_zoom(axins1)
@@ -229,7 +229,7 @@ def save_figure3():
     plt.legend(bbox_to_anchor=(0, 0), handles=handles, ncol=2,
                loc='lower left', fontsize='medium')
     plt.xlabel('Reserved RB Numbers', fontsize='x-large')
-    plt.ylabel('Latency of 5G/TSN Network', fontsize='x-large')
+    plt.ylabel('Latency of 5G/TSN Network(us)', fontsize='x-large')
     plt.show()
 
     # fig.savefig(data_path / 'ave_pre_accu.pdf', dpi=600, format='pdf')
@@ -298,7 +298,7 @@ def save_figure4():
     # plt.yticks(np.arange(0, 1, 0.1))
     ax.set_ylim(0, 250, 10)
     ax.tick_params(axis='y', labelcolor=t_5g_color)
-    ax.set_ylabel('Latency of 5G Network',
+    ax.set_ylabel('Latency of 5G Network(us)',
                   color=t_5g_color, fontsize='x-large')
 
     ax2.tick_params(axis='y', labelcolor=t_tsn_color)
@@ -378,7 +378,7 @@ def save_figure5():
     plt.legend(bbox_to_anchor=(0, 1), handles=handles, labels=labels,
                loc='upper left', fontsize='small', ncol=2)
     plt.xlabel('Signal Ratio', fontsize='x-large')
-    plt.ylabel('Latency of 5G Network', fontsize='x-large')
+    plt.ylabel('Latency of 5G Network(us)', fontsize='x-large')
     plt.show()
 
     # fig.savefig(data_path / 'ave_pre_accu.pdf', dpi=600, format='pdf')
@@ -447,7 +447,7 @@ def save_figure6():
             # axins1.plot(res, t_tsn,  style_dict[data_name], color=color_dict[data_name])
     ax2.set_ylabel('Relative Difference from True Reward', fontsize='x-large')
     ax3.annotate('The scope of Risk-sensitive Learning is much more higher.', xy=(x, y),
-                 xytext=(x+90, y+0.4), arrowprops=dict(arrowstyle='->'), fontsize='x-large')
+                 xytext=(x+90, y+0.4), arrowprops=dict(arrowstyle='->'), fontsize='large')
     # #处理图例
 
     # ax.indicate_inset_zoom(axins)
@@ -525,7 +525,7 @@ def save_figure7():
             # axins1.plot(res, t_tsn,  style_dict[data_name], color=color_dict[data_name])
     ax2.set_ylabel('Total Delay of HTSN (us)', fontsize='x-large')
     ax3.annotate('The scope of Risk-sensitive Learning is much more higher.', xy=(x, y),
-                 xytext=(x+90, y+0.4), arrowprops=dict(arrowstyle='->'), fontsize='x-large')
+                 xytext=(x+90, y+2.8), arrowprops=dict(arrowstyle='->'), fontsize='x-large')
     # #处理图例
 
     # ax.indicate_inset_zoom(axins)
@@ -544,3 +544,4 @@ if __name__ == '__main__':
     save_figure7()
 
     print('=> Generate done.')
+    
