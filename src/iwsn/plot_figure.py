@@ -6,6 +6,8 @@ import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib import lines as mlines
 
+plt.rcParams["font.family"] = "Times New Roman"
+
 metirc_order = {}
 
 
