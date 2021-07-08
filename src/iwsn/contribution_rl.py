@@ -30,7 +30,7 @@ class SensorContrib(object):
     '''The sensor contribution class.'''
 
     def __init__(self,
-                 data_path: str = 'data/pre_accu/4500.csv',
+                 data_path: str = 'src/iwsn/data/pre_accu/4500.csv',
                  # active_thresh: float = 0.2,
                  sensor_num_pre_t: int = 60,
                  trans_time_interal: int = 3,
@@ -175,7 +175,7 @@ class SensorContrib(object):
         sort_sensor = np.argsort(sel_sensor)[::-1]  # 从大到小排序条件概率p(x|i)对应的x
         # sort_sensor = np.flip(np.argsort(sel_sensor),axis=0)#从大到小排序条件概率p(x|i)对应的x
         # 每一行（y）取概率最大的前res_num个x————预测节点集
-        sort_sensor = sort_sensor[0: tc_num1]
+        sort_sensor = sort_sensor[0: tc_num1]#————————得到预测节点集
         # unique, counts = np.unique(sort_sensor, return_counts=True)
         # sort_sensor = unique[np.argsort(counts)[::-1]] #从大到小排序index
         # sort_sensor = np.argsort(sort_sensor)[::-1] #从大到小排序index
@@ -212,7 +212,7 @@ class SensorContrib(object):
         act_num = 0
         # active_th = np.linspace(0.5,1,sensor_num,endpoint=False) #设置传感器触发概率随着sensor index递减
         for i in range(self._sensor_npt * t, self._sensor_npt *t + self._act_num ):
-            if self.trans_prob[i] >= 0.2:
+            if self.trans_prob[i] >= 0.4:
                 activated.append(i)
                 act_num += 1
 

@@ -317,7 +317,7 @@ def save_figure4():
 
     plt.grid(linestyle='-.')
     plt.legend(bbox_to_anchor=(0, 0), handles=handles,
-               loc='lower left', fontsize='small')
+               loc='lower left', fontsize='medium')
     plt.show()
 
     # fig.savefig(data_path / 'ave_pre_accu.pdf', dpi=600, format='pdf')
@@ -392,7 +392,7 @@ def save_figure5():
     plt.yticks(np.arange(60, 250, 20))
     plt.grid(linestyle='-.')
     plt.legend(bbox_to_anchor=(0, 1), handles=handles,
-               loc='upper left', fontsize='small', ncol=2)
+               loc='upper left', fontsize='medium', ncol=2)
     plt.xlabel('Signal Ratio', fontsize='xx-large')
     plt.ylabel('Latency of 5G Network (us)', fontsize='xx-large')
     plt.show()
@@ -559,6 +559,6 @@ def save_figure7():
 
 
 if __name__ == '__main__':
-    save_figure5()
+    save_figure1()
 
     print('=> Generate done.')

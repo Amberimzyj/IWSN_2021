@@ -17,7 +17,7 @@ from iwsn import contribution_rl
 
 class RTSN(object):
     def __init__(self,
-                 data_path: str = 'data/X2_pro_3000.npz',
+                 data_path: str = 'src/iwsn/data/X2_pro_3000.npz',
                  # TTI = 0,
                  C=4,
                  subslot=15,
@@ -117,8 +117,7 @@ class RTSN(object):
             int:  存放固定预留RB上预留且触发且被抢占的节点数量
         """
         X2_pro = self.gen_pro(3)
-        _, pre_sensor, _, trigger_sensor, _= self.con.cal_pre_accu(
-            t, X2_pro)  # 预测t时刻触发节点
+        _, pre_sensor, _, trigger_sensor, _= self.con.cal_pre_accu(t, X2_pro)  # 预测t时刻触发节点
         # print(pre_sensor)
         # print(trigger_sensor)
         pre_sensor_temp = np.zeros(self.res_rb_num)
@@ -181,7 +180,7 @@ class RTSN(object):
         return ns_num, ns_index, preempt_num
 
     def cal_5G_delay(self, t: int) -> float:
-        """计算5G通信时延，为使q_t属于[0,7],5G时延必须属于[64,92
+        """计算5G通信时延，为使q_t属于[0,7],5G时延必须属于[64,92]
 
         Args:
             t (int): 当前TTI
@@ -285,13 +284,15 @@ class RTSN(object):
         # return q_t
 
 
-def save_file(res_num, t_5G, q_t, t_tsn, inte_delay, filepath):
+def save_file(res_num, t_5G, q_t, t_tsn, inte_delay, tc_num, ns_num, filepath):
     dataframe = pd.DataFrame({
         "res_num": res_num,
         "t_5G": t_5G,
         "q_t": q_t,
         "t_tsn": t_tsn,
         "inte_delay": inte_delay,
+        "tc_num": tc_num,
+        "ns_num": ns_num,
     })
     dataframe.to_csv(filepath)
 
@@ -316,6 +317,9 @@ def get_data(runs: int, time: int, rtsn) -> list:
 
     t_tsns = []  # 存放TSN时延
     inte_delays = []  # 存放总时延
+
+    tc_nums = [] #存放TC data数
+    ns_nums = [] #存放NS data数
     # for i, rtsn in enumerate(rtsns):
     for r in trange(runs):
         # RTSN.reset()
@@ -333,12 +337,18 @@ def get_data(runs: int, time: int, rtsn) -> list:
             inte_delay = t_5G + t_tsn
             inte_delays.append(inte_delay)
 
+            tc_num = rtsn.data_gen_dynamic_tc(t)
+            tc_nums.append(tc_num)
+
+            ns_num = rtsn.data_gen_ns(t)
+            ns_nums.append(ns_num)
+
             # t_5G.append(rtsn.cal_5G_delay(t))
             # q_t.append(rtsn.cal_q_t(t_5G[t]))
             # t_tsn.append(rtsn.cal_tsn_delay(t, q_t[t]))
             # inte_delay.append((t_5G[t] + t_tsn[t]))
 
-    return t_5Gs, t_tsns, q_ts, inte_delays
+    return t_5Gs, t_tsns, q_ts, inte_delays, tc_nums, ns_nums
 
 
 # def simulate(runs, time, rtsns):
@@ -369,18 +379,18 @@ def test(runs: int, time: int):
     # r_subslot_num = range(16)
     # rtsns = [RTSN(res_subslot_num = res) for res in r_subslot_num]
     rtsn = RTSN()
-    t_5Gs, t_tsns, q_ts, inte_delays = get_data(runs, time, RTSN())
+    t_5Gs, t_tsns, q_ts, inte_delays, tc_nums, ns_nums = get_data(runs, time, RTSN())
     # np.savetxt('data/t_5Gs.csv',t_5Gs,q_ts)
     # np.savetxt('data/t_5Gs.csv',t_5Gs)
     save_file(rtsn.res_subslot_num, t_5Gs, q_ts,
-              t_tsns, inte_delays, 'data/RTSN.csv')
+              t_tsns, inte_delays, tc_nums, ns_nums, 'src/iwsn/data/RTSN.csv')
 
 
 def travers_data(runs: int, time: int):
     rtsn = RTSN()
     r_rt = [i for i in range(rtsn.subslot+1)]  # self.subslot = 15
     all_t_tsns = np.zeros((len(r_rt), 8))
-    all_data = np.zeros((rtsn.subslot+1, 5)) #用来存放总数据
+    all_data = np.zeros((rtsn.subslot+1, 7)) #用来存放总数据
 
 
     for res in r_rt:
@@ -389,19 +399,21 @@ def travers_data(runs: int, time: int):
         t_5g = rtsns.cal_5G_delay(0)[0]
         all_t_tsns[res] += t_5g
 
-        t_5Gs, t_tsns, q_ts, inte_delays = get_data(runs, time, rtsns)
+        t_5Gs, t_tsns, q_ts, inte_delays, tc_nums, ns_nums = get_data(runs, time, rtsns)
 
         all_data[res][0] = res
         all_data[res][1] = np.mean(t_5Gs)
         all_data[res][2] = np.argmax(np.bincount(q_ts))
         all_data[res][3] = np.mean(t_tsns)
         all_data[res][4] = np.mean(inte_delays)
+        all_data[res][5] = np.mean(tc_nums)
+        all_data[res][6] = np.mean(ns_nums)
         
                 
-        save_file(res, t_5Gs, q_ts, t_tsns, inte_delays,
-                  f'data/RTSN_res/RTSN_res_{res}.csv')
+        save_file(res, t_5Gs, q_ts, t_tsns, inte_delays, tc_nums, ns_nums,
+                  f'src/iwsn/data/RTSN_res/RTSN_res_{res}.csv')
         
-    np.savetxt('data/RTSN.csv', all_data)
+    np.savetxt('src/iwsn/data/RTSN.csv', all_data)
 
 
     # print(all_t_tsns)
@@ -413,14 +425,16 @@ def signal_ratio_5g(runs:int, time:int):
 
     for i in range(len(signal_ratio)):
         rtsns = RTSN(signal_ratio=signal_ratio[i], max_t=time)
-        t_5Gs, t_tsns, q_ts, inte_delays = get_data(runs, time, rtsns)
+        t_5Gs, t_tsns, q_ts, inte_delays, tc_nums, ns_nums = get_data(runs, time, rtsns)
         all_data[i][0] = signal_ratio[i]
         all_data[i][1] = np.mean(t_5Gs)
         all_data[i][2] = np.argmax(np.bincount(q_ts))
         all_data[i][3] = np.mean(t_tsns)
         all_data[i][4] = np.mean(inte_delays)
+        # all_data[i][5] = np.mean(tc_nums)
+        # all_data[i][6] = np.mean(ns_nums)
 
-    np.savetxt('data/RTSN_data/signal/signal_ratio.csv', all_data)
+    np.savetxt('src/iwsn/data/RTSN_data/signal/signal_ratio.csv', all_data)
 
 
 
