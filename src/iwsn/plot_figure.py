@@ -48,7 +48,7 @@ def save_figure1():
     axins.set_yticks(np.arange(0.7, 0.85, 0.05))
     axins.grid(linestyle='-.')
 
-    data_path = Path("data/pre_accu")
+    data_path = Path("src/iwsn/data/pre_accu")
 
     for sub_dir in data_path.glob('*'):
         nodes = sub_dir.stem
@@ -107,7 +107,7 @@ def save_figure2():
     # axins1.set_yticks(np.arange(180, 210, 10))
     # axins1.grid(linestyle='-.')
 
-    data_path = Path("data/RTSN_data/5g_tsn")
+    data_path = Path("src/iwsn/data/RTSN_data/5g_tsn")
     for csv_path in data_path.glob('*.csv'):
         all_data = np.loadtxt(csv_path)
         res = all_data[:, 0]
@@ -179,7 +179,7 @@ def save_figure3():
     # axins1.set_yticks(np.arange(180, 210, 10))
     # axins1.grid(linestyle='-.')
 
-    data_path = Path("data/RTSN_data/5g_tsn")
+    data_path = Path("src/iwsn/data/RTSN_data/5g_tsn")
     for csv_path in data_path.glob('*.csv'):
         all_data = np.loadtxt(csv_path)
         res = all_data[:, 0]
@@ -268,7 +268,7 @@ def save_figure4():
     ax2.set_ylim(0, 5)
     ax2.set_ylabel('Queue Index of TSN Gateway')
 
-    data_path = Path("data/RTSN_data/q_t")
+    data_path = Path("src/iwsn/data/RTSN_data/q_t")
     for csv_path in data_path.glob('*.csv'):
         all_data = np.loadtxt(csv_path)
         res = all_data[:, 0]
@@ -354,7 +354,7 @@ def save_figure5():
     # axins1.set_yticks(np.arange(100, 130, 10))
     # axins1.grid(linestyle='-.')
 
-    data_path = Path("data/RTSN_data/signal/using")
+    data_path = Path("src/iwsn/data/RTSN_data/signal/using")
     for sub_dir in data_path.glob('*'):
         nodes = sub_dir.stem
         for csv_path in sub_dir.glob('*.csv'):
@@ -430,7 +430,7 @@ def save_figure6():
     # axins1.set_yticks(np.arange(100, 130, 10))
     # axins1.grid(linestyle='-.')
 
-    data_path = Path("data/Bandit_data/using")
+    data_path = Path("src/iwsn/data/Bandit_data/using")
     for sub_dir in data_path.glob('*'):
         nodes = sub_dir.stem
         ax = ax_dict[nodes]
@@ -508,7 +508,7 @@ def save_figure7():
     # axins1.set_yticks(np.arange(100, 130, 10))
     # axins1.grid(linestyle='-.')
 
-    data_path = Path("data/Bandit_data/inte_delay")
+    data_path = Path("src/iwsn/data/Bandit_data/inte_delay")
     for sub_dir in data_path.glob('*'):
         nodes = sub_dir.stem
         ax = ax_dict[nodes]
