@@ -394,12 +394,18 @@ def travers_data(runs: int, time: int):
 
 
     for res in r_rt:
+        ns_nums = [] #存放ns数据数量
         rtsns = RTSN(res_subslot_num=res, max_t=time)
         all_t_tsns[res] = rtsns.cal_tsn_delay(0, np.arange(0, 8))
         t_5g = rtsns.cal_5G_delay(0)[0]
         all_t_tsns[res] += t_5g
 
-        t_5Gs, t_tsns, q_ts, inte_delays, tc_nums, ns_nums = get_data(runs, time, rtsns)
+        t_5Gs, t_tsns, q_ts, inte_delays, tc_nums, ns_num = get_data(runs, time, rtsns)
+
+        # 将二维数组ns_nums换成一维
+        for i in range(len(ns_num)):
+            ns_nums.append(ns_num[i][0])
+
 
         all_data[res][0] = res
         all_data[res][1] = np.mean(t_5Gs)
@@ -407,7 +413,7 @@ def travers_data(runs: int, time: int):
         all_data[res][3] = np.mean(t_tsns)
         all_data[res][4] = np.mean(inte_delays)
         all_data[res][5] = np.mean(tc_nums)
-        all_data[res][6] = np.mean(ns_nums)
+        all_data[res][6] = np.mean(ns_nums[0:])
         
                 
         save_file(res, t_5Gs, q_ts, t_tsns, inte_delays, tc_nums, ns_nums,
@@ -439,8 +445,8 @@ def signal_ratio_5g(runs:int, time:int):
 
 
 if __name__ == '__main__':
-    # travers_data(runs=1, time=45)
-    signal_ratio_5g(runs=1, time=45)
+    travers_data(runs=1, time=45)
+    # signal_ratio_5g(runs=1, time=45)
 
     # test(3,10)
 
