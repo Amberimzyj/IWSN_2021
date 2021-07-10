@@ -6,6 +6,8 @@ __pycache__/
 /src/jupyter/
 /data/
 /docs/
+/build/
+/dist/
 /.vscode/
 /.venv/
 /.pytest_cache/

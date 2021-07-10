@@ -562,68 +562,133 @@ def save_figure8():
     # res —— t_5g
 
     # royalblue darkorange tomato forestgreen
-    style_dict = {'RTSN_3000': '.--', 'RTSN_4500': 'o-', 'RTSN_6000': '^--'}
+    style_dict = {'3000': '*--', '4500': 'o-', '6000': '^--'}
     metric_dict = {'RTSN_3000': 'Data Size:3000 ',
                    'RTSN_4500': 'Data Size:4500', 'RTSN_6000': 'Data Size:6000 '}
-    # metirc_order = {'X2': 1, 'MI': 2, 'Cond': 3, 'Select': 4}
-    color_dict = {'RTSN_3000': 'forestgreen',
-                  'RTSN_4500': 'royalblue', 'RTSN_6000': 'tomato'}
+    color_dict = {'3002': 'forestgreen', '4002': 'royalblue', '5002': 'tomato'}
 
     plt.rcParams["legend.facecolor"] = 'whitesmoke'  # 设置图例背景色
     plt.rcParams["legend.edgecolor"] = '0.5'  # 设置图例边框深浅
 
-    # 局部放大
     fig, ax = plt.subplots(figsize=(6.5, 5))
-    axins = ax.inset_axes((0.15, 0.4, 0.2, 0.5))
-    axins.set_xlim(6, 8)
-    axins.set_ylim(90, 140)
-    axins.set_xticks(np.arange(6, 8, 0.5))
-    axins.set_yticks(np.arange(90, 140, 10))
-    axins.grid(linestyle='-.')
+    # 局部放大
+    # axins = ax.inset_axes((0.15, 0.4, 0.2, 0.5))
+    # axins.set_xlim(6, 8)
+    # axins.set_ylim(90, 140)
+    # axins.set_xticks(np.arange(6, 8, 0.5))
+    # axins.set_yticks(np.arange(90, 140, 10))
+    # axins.grid(linestyle='-.')
 
-    # axins1 = ax.inset_axes((0.6, 0.3, 0.3, 0.2))
-    # axins1.set_xlim(9, 11)
-    # axins1.set_ylim(180, 210)
-    # axins1.set_xticks(np.arange(9, 11, 0.5))
-    # axins1.set_yticks(np.arange(180, 210, 10))s
-    # axins1.grid(linestyle='-.')
-
-    data_path = Path("src/iwsn/data/RTSN_data/5g_tsn")
-    for csv_path in data_path.glob('*.csv'):
+    data_path = Path("data")
+    for csv_path in data_path.glob('RTSN_??00_?002.csv'):
         all_data = np.loadtxt(csv_path)
         res = all_data[:, 0]
         t_5G = all_data[:, 1]
         q_t = all_data[:, 2]
         t_tsn = all_data[:, 3]
         inte_delay = all_data[:, 4]
-        data_name = csv_path.stem
+        data_name = csv_path.stem[5:].split('_')
+        first_name = data_name[0]
+        last_name = data_name[1]
         line,  = plt.plot(
-            res, t_5G, style_dict[data_name], color=color_dict[data_name], linewidth=0.8)
-        line.set_label(f'{metric_dict[data_name]}')
-        axins.plot(
-            res, t_5G,  style_dict[data_name], color=color_dict[data_name])
+            res, t_5G, style_dict[first_name], markerfacecolor='none', color=color_dict[last_name], linewidth=0.8)
+        line.set_label(f'{data_name}')
+        # axins.plot(
+        #     res, t_5G,  style_dict[data_name], color=color_dict[data_name])
         # axins1.plot(res, t_5G,  style_dict[data_name], color=color_dict[data_name])
 
     # #处理图例
-    handles, labels = plt.gca().get_legend_handles_labels()
+    # handles, labels = plt.gca().get_legend_handles_labels()
+    # #处理图例
+    # handles, labels = plt.gca().get_legend_handles_labels()
+    handles = []
+    handles.append(mlines.Line2D([], [], color=color_dict['3002'], label='NS data ratio 30%'))
+    handles.append(mlines.Line2D([], [], color=color_dict['4002'], label='NS data ratio 40%'))
+    handles.append(mlines.Line2D([], [], color=color_dict['5002'], label='NS data ratio 50%'))
+    handles.append(mlines.Line2D([], [], marker=style_dict['3000'][0], linestyle=style_dict['3000'][1:], color='dimgray', markerfacecolor='none', label='RTSN_3000'))
+    handles.append(mlines.Line2D([], [], marker=style_dict['4500'][0], linestyle=style_dict['4500'][1:], color='dimgray', markerfacecolor='none', label='RTSN_4500'))
+    handles.append(mlines.Line2D([], [], marker=style_dict['6000'][0], linestyle=style_dict['6000'][1:], color='dimgray', markerfacecolor='none', label='RTSN_6000'))
 
-    ax.indicate_inset_zoom(axins)
-    # ax.indicate_inset_zoom(axins1)
+    # ax.indicate_inset_zoom(axins)
 
     # mark_inset(ax, axins, loc1=3, loc2=1, fc="none", ec='k', lw=1)
     plt.xticks(np.arange(0, 15, 2))
     # plt.yticks(np.arange(0, 1, 0.1))
     plt.grid(linestyle='-.')
-    plt.legend(bbox_to_anchor=(1, 0), handles=handles,
-               labels=labels, loc='lower right', fontsize='medium')
+    plt.legend(bbox_to_anchor=(1, 0), handles=handles, loc='lower right', fontsize='medium')
     plt.xlabel('Reserved RB Numbers', fontsize='xx-large')
     plt.ylabel('Latency of 5G Network (us)', fontsize='xx-large')
     plt.show()
 
-    # fig.savefig(data_path / 'ave_pre_accu.pdf', dpi=600, format='pdf')
+    fig.savefig(data_path / 't_5G.pdf', dpi=600, format='pdf')
+
+def save_figure9():
+    # res —— t_5g
+
+    # royalblue darkorange tomato forestgreen
+    style_dict = {'3000': '*--', '4500': 'o-', '6000': '^--'}
+    metric_dict = {'RTSN_3000': 'Data Size:3000 ',
+                   'RTSN_4500': 'Data Size:4500', 'RTSN_6000': 'Data Size:6000 '}
+    color_dict = {'3002': 'forestgreen', '4002': 'royalblue', '5002': 'tomato'}
+
+    plt.rcParams["legend.facecolor"] = 'whitesmoke'  # 设置图例背景色
+    plt.rcParams["legend.edgecolor"] = '0.5'  # 设置图例边框深浅
+
+    fig, ax = plt.subplots(figsize=(6.5, 5))
+    # 局部放大
+    # axins = ax.inset_axes((0.15, 0.4, 0.2, 0.5))
+    # axins.set_xlim(6, 8)
+    # axins.set_ylim(90, 140)
+    # axins.set_xticks(np.arange(6, 8, 0.5))
+    # axins.set_yticks(np.arange(90, 140, 10))
+    # axins.grid(linestyle='-.')
+
+    data_path = Path("data")
+    for csv_path in data_path.glob('RTSN_??00_?002.csv'):
+        all_data = np.loadtxt(csv_path)
+        res = all_data[:, 0]
+        t_5G = all_data[:, 1]
+        q_t = all_data[:, 2]
+        t_tsn = all_data[:, 3]
+        inte_delay = all_data[:, 4]
+        data_name = csv_path.stem[5:].split('_')
+        first_name = data_name[0]
+        last_name = data_name[1]
+        line,  = plt.plot(
+            res, t_tsn, style_dict[first_name], markerfacecolor='none', color=color_dict[last_name], linewidth=0.8)
+        line.set_label(f'{data_name}')
+        # axins.plot(
+        #     res, t_5G,  style_dict[data_name], color=color_dict[data_name])
+        # axins1.plot(res, t_5G,  style_dict[data_name], color=color_dict[data_name])
+
+    # #处理图例
+    # handles, labels = plt.gca().get_legend_handles_labels()
+    # #处理图例
+    # handles, labels = plt.gca().get_legend_handles_labels()
+    handles = []
+    handles.append(mlines.Line2D([], [], color=color_dict['3002'], label='NS data ratio 30%'))
+    handles.append(mlines.Line2D([], [], color=color_dict['4002'], label='NS data ratio 40%'))
+    handles.append(mlines.Line2D([], [], color=color_dict['5002'], label='NS data ratio 50%'))
+    handles.append(mlines.Line2D([], [], marker=style_dict['3000'][0], linestyle=style_dict['3000'][1:], color='dimgray', markerfacecolor='none', label='RTSN_3000'))
+    handles.append(mlines.Line2D([], [], marker=style_dict['4500'][0], linestyle=style_dict['4500'][1:], color='dimgray', markerfacecolor='none', label='RTSN_4500'))
+    handles.append(mlines.Line2D([], [], marker=style_dict['6000'][0], linestyle=style_dict['6000'][1:], color='dimgray', markerfacecolor='none', label='RTSN_6000'))
+
+    # ax.indicate_inset_zoom(axins)
+
+    # mark_inset(ax, axins, loc1=3, loc2=1, fc="none", ec='k', lw=1)
+    plt.xticks(np.arange(0, 15, 2))
+    # plt.yticks(np.arange(0, 1, 0.1))
+    plt.grid(linestyle='-.')
+    plt.legend(bbox_to_anchor=(0, 0), handles=handles, ncol=2, loc='lower left', fontsize='medium')
+    plt.xlabel('Reserved RB Numbers', fontsize='xx-large')
+    plt.ylabel('Latency of 5G Network (us)', fontsize='xx-large')
+    plt.show()
+
+    fig.savefig(data_path / 't_tsn.pdf', dpi=600, format='pdf')
+
 
 
 if __name__ == '__main__':
-    save_figure1()
+    save_figure9()
 
     print('=> Generate done.')
