@@ -212,7 +212,7 @@ class SensorContrib(object):
         act_num = 0
         # active_th = np.linspace(0.5,1,sensor_num,endpoint=False) #设置传感器触发概率随着sensor index递减
         for i in range(self._sensor_npt * t, self._sensor_npt *t + self._act_num ):
-            if self.trans_prob[i] >= 0.25 :
+            if self.trans_prob[i] >= 0.4 :
                 activated.append(i)
                 act_num += 1
 
