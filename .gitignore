@@ -26,3 +26,8 @@ __pycache__/
 *.out
 *.log
 *.gz
+scis_paper/scis_paper.pdf
+scis_paper/scis_paper.fdb_latexmk
+scis_paper/__latexindent_temp.tex
+scis_paper/scis_paper.pdf
+scis_paper/scis_paper.fls
