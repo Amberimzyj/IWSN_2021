@@ -17,7 +17,7 @@ from iwsn import contribution_rl
 
 class RTSN(object):
     def __init__(self,
-                 data_path: str = 'src/iwsn/data/X2_pro_6000.npz',
+                 data_path: str = 'src/iwsn/data/X2_pro_3000.npz',
                  # TTI = 0,
                  C=4,
                  subslot=15,
@@ -162,7 +162,7 @@ class RTSN(object):
         if not hasattr(self, 'ns'):
             self.ns = np.random.rand(self.max_t, self.subslot)
 
-        ns_index = np.where(self.ns[t] > 0.8)[0]
+        ns_index = np.where(self.ns[t] > 0.9)[0]
         ns_num = len(ns_index)
         preempt_num = (ns_index < self.res_subslot_num).sum()
 
@@ -445,7 +445,7 @@ def signal_ratio_5g(runs:int, time:int):
 
 
 if __name__ == '__main__':
-    travers_data(runs=1, time=60)
+    travers_data(runs=1, time=30)
     # signal_ratio_5g(runs=1, time=45)
 
     # test(3,10)
